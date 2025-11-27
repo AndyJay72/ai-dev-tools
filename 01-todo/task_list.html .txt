@@ -1,0 +1,19 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'tasks/styles.css' %}">
+
+<div class="container">
+    <h2>Task List</h2>
+    <ul>
+        {% for task in tasks %}
+            <li>
+                <span><strong>{{ task.title }}</strong> - {{ task.description }}</span>
+                {% if task.due_date %}
+                    <span class="due-date">Due: {{ task.due_date }}</span>
+                {% endif %}
+            </li>
+        {% empty %}
+            <li>No tasks yet.</li>
+        {% endfor %}
+    </ul>
+    <a href="{% url 'task_create' %}" class="button">Create a new task</a>
+</div>
