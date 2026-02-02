@@ -339,94 +339,88 @@
     </div>
 
     <script>
-        // --- BULLETPROOF CONFIGURATION ---
-        const RAW_URL = 'https://n8n.srv1090894.hstgr.cloud/webhook/tutor'; 
-        const STUDENT_ID = 'STU_' + Math.floor(1000 + Math.random() * 9000);
+        // --- UNBREAKABLE CONFIGURATION ---
+// I have added a cleanup function directly to the URL string
+const RAW_URL = 'https://n8n.srv1090894.hstgr.cloud/webhook/tutor'
+    .replace(/[^\x20-\x7E]/g, "") // Deletes all non-printable characters
+    .trim(); 
 
-        async function transmitToCore() {
-            const questionEl = document.getElementById('question');
-            const questionVal = questionEl.value.trim();
-            
-            if (!questionVal) {
-                alert("INPUT REQUIRED: Please enter a query.");
-                return;
+const STUDENT_ID = 'STU_' + Math.floor(1000 + Math.random() * 9000);
+
+async function transmitToCore() {
+    const questionEl = document.getElementById('question');
+    if (!questionEl) return;
+    
+    const questionVal = questionEl.value.trim();
+    if (!questionVal) {
+        alert("INPUT REQUIRED: Please enter a query.");
+        return;
+    }
+
+    // UI Feedback
+    document.getElementById('loader').style.display = 'block';
+    document.getElementById('outputBox').style.display = 'none';
+    const memAgent = document.getElementById('memoryAgent');
+    if (memAgent) memAgent.classList.add('active');
+
+    try {
+        // 1. Double-clean the URL
+        const cleanURL = RAW_URL.replace(/\s/g, "");
+
+        // 2. Build the payload
+        const payload = {
+            action: 'chat',
+            studentId: STUDENT_ID,
+            data: {
+                question: questionVal,
+                subject: document.getElementById('subject').value,
+                level: document.getElementById('level').value
             }
+        };
 
-            // UI Initial state
-            document.getElementById('shimmer').style.display = 'block';
-            document.getElementById('outputBox').style.display = 'none';
-            const memAgent = document.getElementById('memoryAgent');
-            memAgent.classList.add('active');
-            document.getElementById('memStatus').innerText = 'Syncing Core...';
+        // 3. MANUAL STRING BUILDING (More forgiving than 'new URL')
+        const jsonStr = JSON.stringify(payload);
+        const encodedData = encodeURIComponent(jsonStr);
+        const finalLink = cleanURL + "?data=" + encodedData;
 
-            try {
-                // 1. SANITIZE URL: Scrub hidden spaces/newlines to prevent "Pattern mismatch" error
-                const cleanURL = RAW_URL.replace(/[\n\r\s\t]/g, "").trim();
-                
-                if (!cleanURL.startsWith('http')) {
-                    throw new Error("Invalid URL: Must start with http:// or https://");
-                }
+        console.log("Transmitting to:", finalLink);
 
-                // 2. BUILD DATA PAYLOAD
-                const payload = {
-                    action: 'chat',
-                    studentId: STUDENT_ID,
-                    data: {
-                        question: questionVal,
-                        subject: document.getElementById('subject').value,
-                        level: document.getElementById('level').value
-                    }
-                };
+        // 4. FETCH
+        const response = await fetch(finalLink, {
+            method: 'GET',
+            mode: 'cors'
+        });
 
-                // 3. ROBUST URL CONSTRUCTOR
-                // This is the native browser way to build URLs safely
-                const targetUrl = new URL(cleanURL);
-                targetUrl.searchParams.set('data', JSON.stringify(payload));
+        if (!response.ok) {
+            throw new Error(`CORE_ERROR: ${response.status}`);
+        }
 
-                console.log("Transmitting to Core:", targetUrl.href);
+        const data = await response.json();
 
-                // 4. EXECUTE FETCH (Simple GET to bypass CORS preflight)
-                const response = await fetch(targetUrl.href, {
-                    method: 'GET',
-                    mode: 'cors'
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`CORE_ERROR: ${response.status} - ${errorText}`);
-                }
-
-                const data = await response.json();
-
-                // 5. HANDLE STREAM RESPONSE
-                document.getElementById('outputBox').style.display = 'block';
-                
-                // Map to either 'answer' or 'response' keys
-                const aiText = data.answer || data.response || "No stream data received from Core.";
-                document.getElementById('outputText').innerHTML = aiText;
-                
-                // 6. UPDATE HUD INSIGHTS
-                if (data.agentic_insights) {
-                    document.getElementById('sessionCount').innerText = data.agentic_insights.sessions || 0;
-                    document.getElementById('topStrength').innerText = (data.agentic_insights.focus_area || "General").toUpperCase();
-                    
-                    const syncLevel = Math.min((data.agentic_insights.sessions || 0) * 10, 100);
-                    document.getElementById('syncLevel').innerText = syncLevel + '%';
-                }
-
-                // Render Math formulas if present
-                if (window.MathJax) MathJax.typesetPromise();
-
-            } catch (err) {
-                console.error("Transmission Failure:", err);
-                alert("CRITICAL_LINK_FAILURE: " + err.message);
-            } finally {
-                // Reset UI
-                document.getElementById('shimmer').style.display = 'none';
-                memAgent.classList.remove('active');
-                document.getElementById('memStatus').innerText = 'Standby';
+        // 5. UPDATE UI
+        document.getElementById('outputBox').style.display = 'block';
+        const aiText = data.answer || data.response || "No data received.";
+        document.getElementById('outputText').innerHTML = aiText;
+        
+        if (data.agentic_insights) {
+            document.getElementById('sessionCount').innerText = data.agentic_insights.sessions || 0;
+            document.getElementById('topStrength').innerText = (data.agentic_insights.focus_area || "General").toUpperCase();
+            const syncLevel = Math.min((data.agentic_insights.sessions || 0) * 10, 100);
+            if (document.getElementById('syncLevel')) {
+                document.getElementById('syncLevel').innerText = syncLevel + '%';
             }
         }
+
+        if (window.MathJax) MathJax.typesetPromise();
+
+    } catch (err) {
+        console.error("DETAILED ERROR:", err);
+        alert("CRITICAL_LINK_FAILURE: " + err.message);
+    } finally {
+        document.getElementById('loader').style.display = 'none';
+        if (memAgent) memAgent.classList.remove('active');
+    }
+}
     </script>
 </body>
 </html>
