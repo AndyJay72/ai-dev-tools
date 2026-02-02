@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neural Tutor Core | Agentic v2.5</title>
+    <title>Neural Tutor Core | Unbreakable v2.6</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- MathJax for scientific/math formulas -->
     <script>
         MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }, svg: { fontCache: 'global' } };
     </script>
@@ -40,7 +39,7 @@
             overflow-x: hidden;
         }
 
-        /* Cyberpunk Scanline Filter */
+        /* Scanline Overlay */
         body::before {
             content: " ";
             position: fixed;
@@ -125,7 +124,6 @@
             border-radius: 24px;
             padding: 25px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-            transition: transform 0.3s ease, border 0.3s ease;
         }
 
         h3 {
@@ -155,8 +153,6 @@
             box-shadow: 0 0 15px rgba(247, 37, 133, 0.2);
         }
 
-        /* Stats HUD */
-        .stats-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .stat-pill {
             background: rgba(0, 0, 0, 0.3);
             padding: 20px 10px;
@@ -167,21 +163,7 @@
         .stat-val { font-family: 'Orbitron', sans-serif; font-size: 1.6rem; color: #fff; text-shadow: 0 0 10px var(--neon-pink); }
         .stat-lab { font-size: 0.65rem; color: var(--neon-pink); margin-top: 5px; font-weight: bold; }
 
-        /* Workspace Tab bar */
-        .tab-bar { display: flex; gap: 12px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
-        .tab {
-            background: transparent;
-            border: 1px solid var(--neon-pink);
-            color: var(--neon-pink);
-            padding: 10px 20px;
-            border-radius: 30px;
-            cursor: pointer;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.75rem;
-            white-space: nowrap;
-        }
-        .tab.active { background: var(--neon-pink); color: #fff; box-shadow: 0 0 15px var(--neon-pink); }
-
+        /* Form Controls */
         label { display: block; font-size: 0.75rem; color: var(--neon-pink); margin: 20px 0 8px; font-weight: bold; text-transform: uppercase; }
         
         select, textarea {
@@ -253,7 +235,6 @@
         </header>
 
         <div class="main-grid">
-            <!-- Sidebar HUD -->
             <div class="sidebar">
                 <div class="glass-card">
                     <h3><i class="fas fa-satellite-dish"></i> Agent HUD</h3>
@@ -262,13 +243,6 @@
                         <div>
                             <div style="font-weight: bold; font-size: 0.85rem;">Memory Agent</div>
                             <div id="memStatus" style="font-size: 0.7rem; opacity: 0.6;">Standby</div>
-                        </div>
-                    </div>
-                    <div class="agent-row" id="decisionAgent">
-                        <i class="fas fa-microchip" style="color: var(--neon-pink); font-size: 1.2rem;"></i>
-                        <div>
-                            <div style="font-weight: bold; font-size: 0.85rem;">Decision Agent</div>
-                            <div style="font-size: 0.7rem; opacity: 0.6;">Standby</div>
                         </div>
                     </div>
                 </div>
@@ -290,15 +264,8 @@
                 </div>
             </div>
 
-            <!-- Workspace -->
             <div class="workspace">
                 <div class="glass-card">
-                    <div class="tab-bar">
-                        <button class="tab active">Core Terminal</button>
-                        <button class="tab">Study Topics</button>
-                        <button class="tab">Course Planner</button>
-                    </div>
-
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                         <div>
                             <label>Subject Module</label>
@@ -323,7 +290,7 @@
 
                     <button class="btn-execute" onclick="transmitToCore()">Execute Neural Link</button>
                     
-                    <div class="loading-shimmer" id="shimmer">
+                    <div class="loading-shimmer" id="loader">
                         <div class="shimmer-fill"></div>
                     </div>
 
@@ -340,87 +307,90 @@
 
     <script>
         // --- UNBREAKABLE CONFIGURATION ---
-// I have added a cleanup function directly to the URL string
-const RAW_URL = 'https://n8n.srv1090894.hstgr.cloud/webhook/tutor'
-    .replace(/[^\x20-\x7E]/g, "") // Deletes all non-printable characters
-    .trim(); 
+        const RAW_URL = 'https://n8n.srv1090894.hstgr.cloud/webhook/tutor'
+            .replace(/[^\x20-\x7E]/g, "") // Deletes all non-printable/hidden characters
+            .trim(); 
 
-const STUDENT_ID = 'STU_' + Math.floor(1000 + Math.random() * 9000);
+        const STUDENT_ID = 'STU_' + Math.floor(1000 + Math.random() * 9000);
 
-async function transmitToCore() {
-    const questionEl = document.getElementById('question');
-    if (!questionEl) return;
-    
-    const questionVal = questionEl.value.trim();
-    if (!questionVal) {
-        alert("INPUT REQUIRED: Please enter a query.");
-        return;
-    }
-
-    // UI Feedback
-    document.getElementById('loader').style.display = 'block';
-    document.getElementById('outputBox').style.display = 'none';
-    const memAgent = document.getElementById('memoryAgent');
-    if (memAgent) memAgent.classList.add('active');
-
-    try {
-        // 1. Double-clean the URL
-        const cleanURL = RAW_URL.replace(/\s/g, "");
-
-        // 2. Build the payload
-        const payload = {
-            action: 'chat',
-            studentId: STUDENT_ID,
-            data: {
-                question: questionVal,
-                subject: document.getElementById('subject').value,
-                level: document.getElementById('level').value
+        async function transmitToCore() {
+            const questionEl = document.getElementById('question');
+            if (!questionEl) return;
+            
+            const questionVal = questionEl.value.trim();
+            if (!questionVal) {
+                alert("INPUT REQUIRED: Please enter a query.");
+                return;
             }
-        };
 
-        // 3. MANUAL STRING BUILDING (More forgiving than 'new URL')
-        const jsonStr = JSON.stringify(payload);
-        const encodedData = encodeURIComponent(jsonStr);
-        const finalLink = cleanURL + "?data=" + encodedData;
+            // UI Feedback
+            document.getElementById('loader').style.display = 'block';
+            document.getElementById('outputBox').style.display = 'none';
+            const memAgent = document.getElementById('memoryAgent');
+            if (memAgent) memAgent.classList.add('active');
+            document.getElementById('memStatus').innerText = 'Querying Core...';
 
-        console.log("Transmitting to:", finalLink);
+            try {
+                // 1. Double-clean the URL
+                const cleanURL = RAW_URL.replace(/\s/g, "");
 
-        // 4. FETCH
-        const response = await fetch(finalLink, {
-            method: 'GET',
-            mode: 'cors'
-        });
+                // 2. Build the payload
+                const payload = {
+                    action: 'chat',
+                    studentId: STUDENT_ID,
+                    data: {
+                        question: questionVal,
+                        subject: document.getElementById('subject').value,
+                        level: document.getElementById('level').value
+                    }
+                };
 
-        if (!response.ok) {
-            throw new Error(`CORE_ERROR: ${response.status}`);
-        }
+                // 3. MANUAL STRING BUILDING (Forcing compatibility)
+                const jsonStr = JSON.stringify(payload);
+                const encodedData = encodeURIComponent(jsonStr);
+                const finalLink = cleanURL + "?data=" + encodedData;
 
-        const data = await response.json();
+                console.log("Transmitting to Core:", finalLink);
 
-        // 5. UPDATE UI
-        document.getElementById('outputBox').style.display = 'block';
-        const aiText = data.answer || data.response || "No data received.";
-        document.getElementById('outputText').innerHTML = aiText;
-        
-        if (data.agentic_insights) {
-            document.getElementById('sessionCount').innerText = data.agentic_insights.sessions || 0;
-            document.getElementById('topStrength').innerText = (data.agentic_insights.focus_area || "General").toUpperCase();
-            const syncLevel = Math.min((data.agentic_insights.sessions || 0) * 10, 100);
-            if (document.getElementById('syncLevel')) {
-                document.getElementById('syncLevel').innerText = syncLevel + '%';
+                // 4. FETCH EXECUTION
+                const response = await fetch(finalLink, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`CORE_ERROR: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // 5. UPDATE UI
+                document.getElementById('outputBox').style.display = 'block';
+                const aiText = data.answer || data.response || "No stream data received.";
+                document.getElementById('outputText').innerHTML = aiText;
+                
+                if (data.agentic_insights) {
+                    document.getElementById('sessionCount').innerText = data.agentic_insights.sessions || 0;
+                    document.getElementById('topStrength').innerText = (data.agentic_insights.focus_area || "General").toUpperCase();
+                    
+                    const syncLevel = Math.min((data.agentic_insights.sessions || 0) * 10, 100);
+                    const syncEl = document.getElementById('syncLevel');
+                    if (syncEl) syncEl.innerText = syncLevel + '%';
+                }
+
+                if (window.MathJax) MathJax.typesetPromise();
+
+            } catch (err) {
+                console.error("DETAILED ERROR:", err);
+                alert("CRITICAL_LINK_FAILURE: " + err.message);
+            } finally {
+                document.getElementById('loader').style.display = 'none';
+                if (memAgent) {
+                    memAgent.classList.remove('active');
+                    document.getElementById('memStatus').innerText = 'Standby';
+                }
             }
         }
-
-        if (window.MathJax) MathJax.typesetPromise();
-
-    } catch (err) {
-        console.error("DETAILED ERROR:", err);
-        alert("CRITICAL_LINK_FAILURE: " + err.message);
-    } finally {
-        document.getElementById('loader').style.display = 'none';
-        if (memAgent) memAgent.classList.remove('active');
-    }
-}
     </script>
 </body>
 </html>
