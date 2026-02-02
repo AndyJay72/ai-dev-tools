@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GCSE AI Tutor | Neural Core v2.5</title>
+    <title>Neural Tutor Core | Agentic v2.5</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- MathJax for scientific/math formulas -->
     <script>
         MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }, svg: { fontCache: 'global' } };
     </script>
@@ -39,7 +40,7 @@
             overflow-x: hidden;
         }
 
-        /* Cyberpunk Overlay */
+        /* Cyberpunk Scanline Filter */
         body::before {
             content: " ";
             position: fixed;
@@ -154,6 +155,8 @@
             box-shadow: 0 0 15px rgba(247, 37, 133, 0.2);
         }
 
+        /* Stats HUD */
+        .stats-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .stat-pill {
             background: rgba(0, 0, 0, 0.3);
             padding: 20px 10px;
@@ -164,8 +167,8 @@
         .stat-val { font-family: 'Orbitron', sans-serif; font-size: 1.6rem; color: #fff; text-shadow: 0 0 10px var(--neon-pink); }
         .stat-lab { font-size: 0.65rem; color: var(--neon-pink); margin-top: 5px; font-weight: bold; }
 
-        /* Form Controls */
-        .tab-bar { display: flex; gap: 12px; margin-bottom: 20px; overflow-x: auto; }
+        /* Workspace Tab bar */
+        .tab-bar { display: flex; gap: 12px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
         .tab {
             background: transparent;
             border: 1px solid var(--neon-pink);
@@ -245,11 +248,12 @@
             <h1>Neural Tutor <span style="font-weight: 400; opacity: 0.8;">Core</span></h1>
             <div class="status-badge">
                 <div class="pulse"></div>
-                <span>PostgreSQL Cluster Active</span>
+                <span>Neural Postgres Cluster Active</span>
             </div>
         </header>
 
         <div class="main-grid">
+            <!-- Sidebar HUD -->
             <div class="sidebar">
                 <div class="glass-card">
                     <h3><i class="fas fa-satellite-dish"></i> Agent HUD</h3>
@@ -286,6 +290,7 @@
                 </div>
             </div>
 
+            <!-- Workspace -->
             <div class="workspace">
                 <div class="glass-card">
                     <div class="tab-bar">
@@ -316,7 +321,7 @@
                     <label>Neural Query Input</label>
                     <textarea id="question" rows="5" placeholder="Transmit query to Neural Core..."></textarea>
 
-                    <button class="btn-execute" onclick="executeNeuralLink()">Execute Neural Link</button>
+                    <button class="btn-execute" onclick="transmitToCore()">Execute Neural Link</button>
                     
                     <div class="loading-shimmer" id="shimmer">
                         <div class="shimmer-fill"></div>
@@ -334,27 +339,35 @@
     </div>
 
     <script>
-        // --- CLEAN CONFIGURATION ---
-        // We use .trim() to catch any accidental spaces from copy-pasting
-        const BASE_API_URL = 'https://n8n.srv1090894.hstgr.cloud/webhook/tutor';
+        // --- BULLETPROOF CONFIGURATION ---
+        const RAW_URL = 'https://n8n.srv1090894.hstgr.cloud/webhook/tutor'; 
         const STUDENT_ID = 'STU_' + Math.floor(1000 + Math.random() * 9000);
 
-        async function executeNeuralLink() {
-            const questionVal = document.getElementById('question').value.trim();
+        async function transmitToCore() {
+            const questionEl = document.getElementById('question');
+            const questionVal = questionEl.value.trim();
+            
             if (!questionVal) {
-                alert("Please enter a question.");
+                alert("INPUT REQUIRED: Please enter a query.");
                 return;
             }
 
-            // UI State Change
+            // UI Initial state
             document.getElementById('shimmer').style.display = 'block';
             document.getElementById('outputBox').style.display = 'none';
             const memAgent = document.getElementById('memoryAgent');
             memAgent.classList.add('active');
-            document.getElementById('memStatus').innerText = 'Accessing Postgres...';
+            document.getElementById('memStatus').innerText = 'Syncing Core...';
 
             try {
-                // Build the data payload object
+                // 1. SANITIZE URL: Scrub hidden spaces/newlines to prevent "Pattern mismatch" error
+                const cleanURL = RAW_URL.replace(/[\n\r\s\t]/g, "").trim();
+                
+                if (!cleanURL.startsWith('http')) {
+                    throw new Error("Invalid URL: Must start with http:// or https://");
+                }
+
+                // 2. BUILD DATA PAYLOAD
                 const payload = {
                     action: 'chat',
                     studentId: STUDENT_ID,
@@ -365,42 +378,50 @@
                     }
                 };
 
-                // SAFEST URL CONSTRUCTION
-                // This prevents "string did not match the expected pattern" errors
-                const targetUrl = new URL(BASE_API_URL);
+                // 3. ROBUST URL CONSTRUCTOR
+                // This is the native browser way to build URLs safely
+                const targetUrl = new URL(cleanURL);
                 targetUrl.searchParams.set('data', JSON.stringify(payload));
 
-                console.log("Transmitting to:", targetUrl.href);
+                console.log("Transmitting to Core:", targetUrl.href);
 
+                // 4. EXECUTE FETCH (Simple GET to bypass CORS preflight)
                 const response = await fetch(targetUrl.href, {
                     method: 'GET',
                     mode: 'cors'
                 });
 
                 if (!response.ok) {
-                    throw new Error(`Core Connectivity Error: ${response.status}`);
+                    const errorText = await response.text();
+                    throw new Error(`CORE_ERROR: ${response.status} - ${errorText}`);
                 }
 
                 const data = await response.json();
 
-                // Handle AI Response
+                // 5. HANDLE STREAM RESPONSE
                 document.getElementById('outputBox').style.display = 'block';
-                document.getElementById('outputText').innerHTML = data.answer || "No response generated by core.";
                 
-                // Update Profile UI
+                // Map to either 'answer' or 'response' keys
+                const aiText = data.answer || data.response || "No stream data received from Core.";
+                document.getElementById('outputText').innerHTML = aiText;
+                
+                // 6. UPDATE HUD INSIGHTS
                 if (data.agentic_insights) {
                     document.getElementById('sessionCount').innerText = data.agentic_insights.sessions || 0;
                     document.getElementById('topStrength').innerText = (data.agentic_insights.focus_area || "General").toUpperCase();
+                    
                     const syncLevel = Math.min((data.agentic_insights.sessions || 0) * 10, 100);
                     document.getElementById('syncLevel').innerText = syncLevel + '%';
                 }
 
+                // Render Math formulas if present
                 if (window.MathJax) MathJax.typesetPromise();
 
             } catch (err) {
-                console.error("Link Error Details:", err);
+                console.error("Transmission Failure:", err);
                 alert("CRITICAL_LINK_FAILURE: " + err.message);
             } finally {
+                // Reset UI
                 document.getElementById('shimmer').style.display = 'none';
                 memAgent.classList.remove('active');
                 document.getElementById('memStatus').innerText = 'Standby';
