@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neural Tutor Core | Unbreakable v2.6</title>
+    <title>Neural Tutor Core | v2.7 Secure</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -15,10 +15,7 @@
     <style>
         :root {
             --neon-pink: #f72585;
-            --pink-glow: rgba(247, 37, 133, 0.6);
-            --neon-purple: #7209b7;
             --neon-blue: #4895ef;
-            --neon-green: #4ade80;
             --bg-dark: #080110;
             --glass-bg: rgba(255, 255, 255, 0.06);
             --glass-border: rgba(255, 255, 255, 0.12);
@@ -29,275 +26,87 @@
 
         body {
             background-color: var(--bg-dark);
-            background-image: 
-                radial-gradient(circle at 20% 20%, rgba(114, 9, 183, 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 80% 80%, rgba(247, 37, 133, 0.15) 0%, transparent 40%);
+            background-image: radial-gradient(circle at 50% 50%, #1a0033 0%, #080110 100%);
             color: var(--text-main);
             font-family: 'Share Tech Mono', monospace;
             min-height: 100vh;
             padding: 20px;
-            overflow-x: hidden;
         }
 
-        /* Scanline Overlay */
-        body::before {
-            content: " ";
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.03) 0px, rgba(0,0,0,0.03) 1px, transparent 1px, transparent 2px);
-            pointer-events: none;
-            z-index: 1000;
-        }
+        .container { width: 100%; max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
 
-        .container {
-            width: 100%;
-            max-width: 1300px;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            gap: 25px;
-        }
-
-        header {
+        header, .glass-card {
             background: var(--glass-bg);
             backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 30px;
-            text-align: center;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5), 0 0 10px var(--pink-glow);
-        }
-
-        h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: clamp(1.4rem, 6vw, 2.6rem);
-            color: #fff;
-            text-shadow: 0 0 15px var(--neon-pink);
-            letter-spacing: 4px;
-            text-transform: uppercase;
-        }
-
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 0.75rem;
-            color: var(--neon-pink);
-            margin-top: 12px;
-            font-weight: bold;
-            letter-spacing: 2px;
-            padding: 5px 15px;
-            border-radius: 20px;
-            background: rgba(247, 37, 133, 0.1);
-            border: 1px solid rgba(247, 37, 133, 0.3);
-        }
-
-        .pulse {
-            width: 7px; height: 7px;
-            background: var(--neon-pink);
-            border-radius: 50%;
-            box-shadow: 0 0 10px var(--neon-pink);
-            animation: pulse-pink 1.8s infinite;
-        }
-
-        @keyframes pulse-pink {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.4); opacity: 0.5; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        /* Layout Grid */
-        .main-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 25px;
-        }
-
-        @media (min-width: 1024px) {
-            .main-grid { grid-template-columns: 350px 1fr; }
-        }
-
-        .glass-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(25px);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            padding: 25px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-        }
-
-        h3 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.9rem;
-            color: var(--neon-pink);
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-transform: uppercase;
-        }
-
-        .agent-row {
-            background: rgba(255, 255, 255, 0.03);
-            padding: 15px;
             border-radius: 15px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 12px;
-            border: 1px solid transparent;
-        }
-        .agent-row.active {
-            background: rgba(247, 37, 133, 0.08);
-            border-color: var(--neon-pink);
-            box-shadow: 0 0 15px rgba(247, 37, 133, 0.2);
+            padding: 25px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
         }
 
-        .stat-pill {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 20px 10px;
-            border-radius: 20px;
-            text-align: center;
-            border: 1px solid var(--glass-border);
-        }
-        .stat-val { font-family: 'Orbitron', sans-serif; font-size: 1.6rem; color: #fff; text-shadow: 0 0 10px var(--neon-pink); }
-        .stat-lab { font-size: 0.65rem; color: var(--neon-pink); margin-top: 5px; font-weight: bold; }
+        h1 { font-family: 'Orbitron', sans-serif; text-align: center; color: var(--neon-pink); text-shadow: 0 0 10px var(--neon-pink); text-transform: uppercase; letter-spacing: 3px; }
 
-        /* Form Controls */
-        label { display: block; font-size: 0.75rem; color: var(--neon-pink); margin: 20px 0 8px; font-weight: bold; text-transform: uppercase; }
+        .main-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        @media (min-width: 1024px) { .main-grid { grid-template-columns: 320px 1fr; } }
+
+        .stat-pill { background: rgba(0,0,0,0.4); padding: 15px; border-radius: 10px; text-align: center; border: 1px solid var(--neon-pink); margin-top: 10px; }
+        .stat-val { font-family: 'Orbitron'; font-size: 1.5rem; color: #fff; }
+
+        label { display: block; color: var(--neon-pink); font-weight: bold; margin: 15px 0 5px; font-size: 0.8rem; }
         
-        select, textarea {
-            width: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            padding: 15px;
-            color: #fff;
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 1rem;
-        }
+        select, textarea { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--glass-border); border-radius: 8px; padding: 12px; color: #fff; }
 
-        .btn-execute {
-            width: 100%;
-            background: var(--neon-pink);
-            border: none;
-            color: #fff;
-            padding: 18px;
-            border-radius: 15px;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 700;
-            margin-top: 25px;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            box-shadow: 0 5px 20px var(--pink-glow);
-        }
+        .btn-execute { width: 100%; background: var(--neon-pink); border: none; color: #fff; padding: 15px; border-radius: 8px; font-family: 'Orbitron'; cursor: pointer; margin-top: 20px; font-weight: bold; }
 
-        .loading-shimmer {
-            height: 4px;
-            width: 100%;
-            background: rgba(255,255,255,0.05);
-            border-radius: 2px;
-            margin-top: 20px;
-            display: none;
-            overflow: hidden;
-            position: relative;
-        }
-        .shimmer-fill {
-            height: 100%; width: 40%;
-            background: var(--neon-pink);
-            box-shadow: 0 0 15px var(--neon-pink);
-            position: absolute;
-            animation: shim 1.5s infinite linear;
-        }
-        @keyframes shim { 0% { left: -40%; } 100% { left: 100%; } }
-
-        .output-box {
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 15px;
-            padding: 25px;
-            margin-top: 25px;
-            border-left: 5px solid var(--neon-pink);
-            line-height: 1.8;
-            display: none;
-        }
+        .output-box { background: rgba(0,0,0,0.6); padding: 20px; border-radius: 10px; border-left: 5px solid var(--neon-pink); margin-top: 20px; display: none; line-height: 1.6; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <header>
-            <h1>Neural Tutor <span style="font-weight: 400; opacity: 0.8;">Core</span></h1>
-            <div class="status-badge">
-                <div class="pulse"></div>
-                <span>Neural Postgres Cluster Active</span>
-            </div>
+            <h1>Neural Tutor <span style="font-weight: 400; opacity: 0.7;">Core</span></h1>
         </header>
 
         <div class="main-grid">
             <div class="sidebar">
                 <div class="glass-card">
-                    <h3><i class="fas fa-satellite-dish"></i> Agent HUD</h3>
-                    <div class="agent-row" id="memoryAgent">
-                        <i class="fas fa-brain" style="color: var(--neon-pink); font-size: 1.2rem;"></i>
-                        <div>
-                            <div style="font-weight: bold; font-size: 0.85rem;">Memory Agent</div>
-                            <div id="memStatus" style="font-size: 0.7rem; opacity: 0.6;">Standby</div>
-                        </div>
+                    <h3 style="color: var(--neon-blue); font-family: 'Orbitron'; font-size: 0.8rem;">STUDENT PROFILE</h3>
+                    <div class="stat-pill">
+                        <div class="stat-val" id="sessionCount">0</div>
+                        <div style="font-size: 0.6rem; color: var(--neon-pink);">SESSIONS</div>
                     </div>
-                </div>
-
-                <div class="glass-card" style="margin-top: 25px;">
-                    <h3><i class="fas fa-user-astronaut"></i> Neural Profile</h3>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                        <div class="stat-pill">
-                            <div class="stat-val" id="sessionCount">0</div>
-                            <div class="stat-lab">Sessions</div>
-                        </div>
-                        <div class="stat-pill">
-                            <div class="stat-val" id="syncLevel">0%</div>
-                            <div class="stat-lab">Sync Level</div>
-                        </div>
-                    </div>
-                    <label>Primary Strength</label>
-                    <div id="topStrength" style="color: #fff; font-family: 'Orbitron'; font-size: 0.9rem; text-shadow: 0 0 5px var(--neon-pink);">Awaiting Data</div>
+                    <div id="topStrength" style="text-align: center; margin-top: 15px; font-size: 0.9rem; color: var(--neon-blue);">AWAITING SYNC</div>
                 </div>
             </div>
 
             <div class="workspace">
                 <div class="glass-card">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                         <div>
-                            <label>Subject Module</label>
+                            <label>SUBJECT</label>
                             <select id="subject">
-                                <option value="maths">Mathematics</option>
-                                <option value="science">Science Core</option>
-                                <option value="computing">Computer Science</option>
-                                <option value="english">English Lit</option>
+                                <option value="maths">MATHEMATICS</option>
+                                <option value="science">SCIENCE</option>
+                                <option value="computing">COMPUTING</option>
                             </select>
                         </div>
                         <div>
-                            <label>Academic Tier</label>
+                            <label>TIER</label>
                             <select id="level">
-                                <option value="foundation">Foundation</option>
-                                <option value="higher">Higher Tier</option>
+                                <option value="foundation">FOUNDATION</option>
+                                <option value="higher">HIGHER</option>
                             </select>
                         </div>
                     </div>
 
-                    <label>Neural Query Input</label>
-                    <textarea id="question" rows="5" placeholder="Transmit query to Neural Core..."></textarea>
+                    <label>NEURAL QUERY</label>
+                    <textarea id="question" rows="4" placeholder="Type your question..."></textarea>
 
-                    <button class="btn-execute" onclick="transmitToCore()">Execute Neural Link</button>
+                    <button class="btn-execute" onclick="transmitToCore()">EXECUTE LINK</button>
                     
-                    <div class="loading-shimmer" id="loader">
-                        <div class="shimmer-fill"></div>
-                    </div>
-
                     <div class="output-box" id="outputBox">
-                        <div style="color: var(--neon-pink); font-size: 0.75rem; font-family: 'Orbitron'; margin-bottom: 12px; letter-spacing: 2px;">
-                            > Incoming Stream:
-                        </div>
+                        <div style="color: var(--neon-pink); font-size: 0.7rem; margin-bottom: 10px;">> INCOMING STREAM:</div>
                         <div id="outputText"></div>
                     </div>
                 </div>
@@ -306,35 +115,28 @@
     </div>
 
     <script>
-        // --- UNBREAKABLE CONFIGURATION ---
-        const RAW_URL = 'https://n8n.srv1090894.hstgr.cloud/webhook/tutor'
-            .replace(/[^\x20-\x7E]/g, "") // Deletes all non-printable/hidden characters
-            .trim(); 
+        // --- THE SANITY CHECKED CONFIG ---
+        // I have removed all quotes and extra logic from this string to make it pure
+        const RAW_URL = 'https://n8n.srv1090894.hstgr.cloud/webhook/tutor';
 
         const STUDENT_ID = 'STU_' + Math.floor(1000 + Math.random() * 9000);
 
         async function transmitToCore() {
             const questionEl = document.getElementById('question');
-            if (!questionEl) return;
-            
             const questionVal = questionEl.value.trim();
-            if (!questionVal) {
-                alert("INPUT REQUIRED: Please enter a query.");
+            if (!questionVal) return;
+
+            // 1. URL SANITY CHECK
+            // We manually clean the URL string of any weird characters
+            let cleanURL = RAW_URL.replace(/[^\x21-\x7E]/g, "").trim();
+            
+            // Check if it's a valid pattern
+            if (!cleanURL.startsWith('http')) {
+                alert("CONFIG ERROR: URL must start with http. Current value: " + cleanURL);
                 return;
             }
 
-            // UI Feedback
-            document.getElementById('loader').style.display = 'block';
-            document.getElementById('outputBox').style.display = 'none';
-            const memAgent = document.getElementById('memoryAgent');
-            if (memAgent) memAgent.classList.add('active');
-            document.getElementById('memStatus').innerText = 'Querying Core...';
-
             try {
-                // 1. Double-clean the URL
-                const cleanURL = RAW_URL.replace(/\s/g, "");
-
-                // 2. Build the payload
                 const payload = {
                     action: 'chat',
                     studentId: STUDENT_ID,
@@ -345,50 +147,33 @@
                     }
                 };
 
-                // 3. MANUAL STRING BUILDING (Forcing compatibility)
+                // 2. SAFE STRING BUILDING
                 const jsonStr = JSON.stringify(payload);
                 const encodedData = encodeURIComponent(jsonStr);
                 const finalLink = cleanURL + "?data=" + encodedData;
 
-                console.log("Transmitting to Core:", finalLink);
+                console.log("Connecting to:", finalLink);
 
-                // 4. FETCH EXECUTION
-                const response = await fetch(finalLink, {
-                    method: 'GET',
-                    mode: 'cors'
-                });
+                const response = await fetch(finalLink, { method: 'GET', mode: 'cors' });
 
-                if (!response.ok) {
-                    throw new Error(`CORE_ERROR: ${response.status}`);
-                }
+                if (!response.ok) throw new Error("Server Error: " + response.status);
 
                 const data = await response.json();
 
-                // 5. UPDATE UI
+                // 3. UI UPDATE
                 document.getElementById('outputBox').style.display = 'block';
-                const aiText = data.answer || data.response || "No stream data received.";
-                document.getElementById('outputText').innerHTML = aiText;
+                document.getElementById('outputText').innerHTML = data.answer || data.response || "No data.";
                 
                 if (data.agentic_insights) {
                     document.getElementById('sessionCount').innerText = data.agentic_insights.sessions || 0;
                     document.getElementById('topStrength').innerText = (data.agentic_insights.focus_area || "General").toUpperCase();
-                    
-                    const syncLevel = Math.min((data.agentic_insights.sessions || 0) * 10, 100);
-                    const syncEl = document.getElementById('syncLevel');
-                    if (syncEl) syncEl.innerText = syncLevel + '%';
                 }
 
                 if (window.MathJax) MathJax.typesetPromise();
 
             } catch (err) {
-                console.error("DETAILED ERROR:", err);
-                alert("CRITICAL_LINK_FAILURE: " + err.message);
-            } finally {
-                document.getElementById('loader').style.display = 'none';
-                if (memAgent) {
-                    memAgent.classList.remove('active');
-                    document.getElementById('memStatus').innerText = 'Standby';
-                }
+                console.error("Link Failure:", err);
+                alert("LINK FAILURE: " + err.message);
             }
         }
     </script>
