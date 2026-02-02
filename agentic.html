@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GCSE AI Tutor | Neural-Core v2.3</title>
+    <title>GCSE AI Tutor | Neural Core v2.4</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -15,222 +15,248 @@
     <style>
         :root {
             --neon-pink: #f72585;
+            --pink-glow: rgba(247, 37, 133, 0.6);
             --neon-purple: #7209b7;
             --neon-blue: #4895ef;
             --neon-green: #4ade80;
-            --bg-dark: #0a0112;
-            --card-bg: rgba(255, 255, 255, 0.07);
-            --border-glow: rgba(247, 37, 133, 0.4);
-            --text-main: #e0e0e0;
+            --bg-dark: #080110;
+            --glass-bg: rgba(255, 255, 255, 0.06);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --text-main: #f0f0f0;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             background-color: var(--bg-dark);
-            background-image: linear-gradient(135deg, #1a0033 0%, #0a0112 100%);
+            background-image: 
+                radial-gradient(circle at 20% 20%, rgba(114, 9, 183, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(247, 37, 133, 0.15) 0%, transparent 40%);
             color: var(--text-main);
             font-family: 'Share Tech Mono', monospace;
             min-height: 100vh;
-            padding: 15px;
+            padding: 20px;
             overflow-x: hidden;
         }
 
-        /* Cyberpunk Scanline Effect */
+        /* Scanline Overlay */
         body::before {
             content: " ";
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 1px, transparent 1px, transparent 2px);
+            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.03) 0px, rgba(0,0,0,0.03) 1px, transparent 1px, transparent 2px);
             pointer-events: none;
-            z-index: 100;
+            z-index: 1000;
         }
 
         .container {
             width: 100%;
-            max-width: 1400px;
+            max-width: 1300px;
             margin: 0 auto;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 25px;
         }
 
         header {
-            background: var(--card-bg);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(247, 37, 133, 0.3);
-            border-radius: 12px;
-            padding: 20px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 30px;
             text-align: center;
-            box-shadow: 0 0 20px var(--border-glow);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5), 0 0 10px var(--pink-glow);
         }
 
         h1 {
             font-family: 'Orbitron', sans-serif;
-            font-size: clamp(1.2rem, 5vw, 2.2rem);
-            background: linear-gradient(90deg, var(--neon-pink), var(--neon-blue));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: 3px;
+            font-size: clamp(1.4rem, 6vw, 2.6rem);
+            color: #fff;
+            text-shadow: 0 0 15px var(--neon-pink);
+            letter-spacing: 4px;
+            text-transform: uppercase;
         }
 
-        .db-status {
-            display: flex;
+        .status-badge {
+            display: inline-flex;
             align-items: center;
-            justify-content: center;
             gap: 10px;
-            font-size: 0.7rem;
-            color: var(--neon-green);
-            margin-top: 10px;
-            letter-spacing: 1px;
+            font-size: 0.75rem;
+            color: var(--neon-pink);
+            margin-top: 12px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            padding: 5px 15px;
+            border-radius: 20px;
+            background: rgba(247, 37, 133, 0.1);
+            border: 1px solid rgba(247, 37, 133, 0.3);
         }
 
-        .pulse-dot {
-            width: 6px; height: 6px;
-            background: var(--neon-green);
+        .pulse {
+            width: 7px; height: 7px;
+            background: var(--neon-pink);
             border-radius: 50%;
-            animation: pulse 1.5s infinite;
+            box-shadow: 0 0 10px var(--neon-pink);
+            animation: pulse-pink 1.8s infinite;
         }
 
-        @keyframes pulse {
-            0% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.3; transform: scale(1.2); }
-            100% { opacity: 1; transform: scale(1); }
+        @keyframes pulse-pink {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.4); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
         }
 
-        /* Fully Responsive Grid */
+        /* Layout Grid */
         .main-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 20px;
+            gap: 25px;
         }
 
         @media (min-width: 1024px) {
-            .main-grid { grid-template-columns: 320px 1fr; }
+            .main-grid { grid-template-columns: 350px 1fr; }
         }
 
         .glass-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(72, 149, 239, 0.2);
-            border-radius: 12px;
-            padding: 20px;
-            position: relative;
-            overflow: hidden;
+            background: var(--glass-bg);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            transition: transform 0.3s ease, border 0.3s ease;
         }
 
-        .glass-card::after {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; width: 4px; height: 100%;
-            background: var(--neon-purple);
+        .glass-card:hover {
+            border-color: rgba(247, 37, 133, 0.5);
+            transform: translateY(-5px);
         }
 
         h3 {
             font-family: 'Orbitron', sans-serif;
-            font-size: 0.85rem;
-            color: var(--neon-blue);
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        /* Agent HUD items */
-        .agent-item {
-            background: rgba(0,0,0,0.3);
-            margin-bottom: 10px;
-            padding: 12px;
-            border-radius: 6px;
+            font-size: 0.9rem;
+            color: var(--neon-pink);
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
             gap: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Agent HUD */
+        .agent-list { display: flex; flex-direction: column; gap: 12px; }
+        .agent-row {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 15px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
             border: 1px solid transparent;
+            transition: 0.3s;
         }
-
-        .agent-item.active {
-            background: rgba(74, 222, 128, 0.1);
-            border-color: var(--neon-green);
-            box-shadow: 0 0 10px rgba(74, 222, 128, 0.2);
+        .agent-row.active {
+            background: rgba(247, 37, 133, 0.08);
+            border-color: var(--neon-pink);
+            box-shadow: 0 0 15px rgba(247, 37, 133, 0.2);
         }
+        .agent-row i { font-size: 1.2rem; color: var(--neon-pink); }
 
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .stat-card {
-            background: rgba(0,0,0,0.4);
-            padding: 12px;
-            border-radius: 8px;
+        /* Stats */
+        .stats-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .stat-pill {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px 10px;
+            border-radius: 20px;
             text-align: center;
-            border: 1px solid rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
         }
-        .stat-val { font-family: 'Orbitron', sans-serif; font-size: 1.2rem; color: var(--neon-pink); }
-        .stat-lab { font-size: 0.6rem; color: #888; margin-top: 4px; }
+        .stat-pill .val { font-family: 'Orbitron', sans-serif; font-size: 1.6rem; color: #fff; text-shadow: 0 0 10px var(--neon-pink); }
+        .stat-pill .lab { font-size: 0.65rem; color: var(--neon-pink); margin-top: 5px; font-weight: bold; }
 
-        /* Controls */
-        .tabs { display: flex; gap: 10px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; }
-        .tab-btn {
+        /* Terminal Controls */
+        .workspace-tabs { display: flex; gap: 12px; margin-bottom: 20px; overflow-x: auto; padding: 5px; }
+        .tab {
             background: transparent;
-            border: 1px solid var(--neon-purple);
-            color: #fff;
-            padding: 8px 15px;
-            border-radius: 4px;
+            border: 1px solid var(--neon-pink);
+            color: var(--neon-pink);
+            padding: 10px 20px;
+            border-radius: 30px;
             cursor: pointer;
-            font-size: 0.75rem;
             font-family: 'Orbitron', sans-serif;
+            font-size: 0.75rem;
             white-space: nowrap;
+            transition: 0.3s;
         }
-        .tab-btn.active { background: var(--neon-purple); box-shadow: 0 0 10px var(--neon-purple); }
+        .tab.active { background: var(--neon-pink); color: #fff; box-shadow: 0 0 15px var(--neon-pink); }
 
-        label { display: block; font-size: 0.75rem; color: var(--neon-blue); margin: 15px 0 5px; }
-        select, textarea, input {
+        .control-group { margin-top: 20px; }
+        label { display: block; font-size: 0.75rem; color: var(--neon-pink); margin-bottom: 8px; font-weight: bold; letter-spacing: 1px; }
+        
+        select, textarea {
             width: 100%;
-            background: rgba(0,0,0,0.5);
-            border: 1px solid rgba(114, 9, 183, 0.5);
-            border-radius: 6px;
-            padding: 12px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 15px;
             color: #fff;
             font-family: 'Share Tech Mono', monospace;
             font-size: 1rem;
+            transition: 0.3s;
         }
+        textarea:focus, select:focus { outline: none; border-color: var(--neon-pink); background: rgba(0,0,0,0.6); }
 
-        .execute-btn {
+        .btn-execute {
             width: 100%;
-            background: linear-gradient(90deg, var(--neon-purple), var(--neon-pink));
+            background: var(--neon-pink);
             border: none;
             color: #fff;
-            padding: 15px;
-            border-radius: 6px;
+            padding: 18px;
+            border-radius: 15px;
             font-family: 'Orbitron', sans-serif;
-            font-weight: bold;
-            margin-top: 20px;
+            font-weight: 700;
+            margin-top: 25px;
             cursor: pointer;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            box-shadow: 0 0 15px rgba(247, 37, 133, 0.3);
+            letter-spacing: 3px;
+            box-shadow: 0 5px 20px var(--pink-glow);
+            transition: 0.3s;
         }
+        .btn-execute:hover { transform: scale(1.02); box-shadow: 0 8px 30px var(--neon-pink); }
 
-        .shimmer {
-            height: 3px;
+        .loading-bar {
+            height: 4px;
             width: 100%;
-            background: linear-gradient(90deg, transparent, var(--neon-blue), transparent);
-            background-size: 200% 100%;
-            animation: shim 1.5s infinite;
-            display: none;
-            margin-top: 15px;
-        }
-
-        @keyframes shim {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
-        }
-
-        .response-box {
-            background: rgba(0,0,0,0.4);
-            border-radius: 8px;
-            padding: 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 2px;
             margin-top: 20px;
-            border-left: 4px solid var(--neon-blue);
-            line-height: 1.6;
             display: none;
+            overflow: hidden;
+            position: relative;
+        }
+        .loading-fill {
+            height: 100%;
+            width: 30%;
+            background: var(--neon-pink);
+            box-shadow: 0 0 15px var(--neon-pink);
+            position: absolute;
+            animation: loading-slide 1.5s infinite linear;
+        }
+        @keyframes loading-slide {
+            0% { left: -30%; }
+            100% { left: 100%; }
+        }
+
+        .output-terminal {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 25px;
+            border-left: 5px solid var(--neon-pink);
+            line-height: 1.8;
+            display: none;
+            font-size: 1.05rem;
         }
     </style>
 </head>
@@ -238,91 +264,99 @@
 
     <div class="container">
         <header>
-            <h1>NEURAL TUTOR <span style="color: var(--neon-pink)">[CORE]</span></h1>
-            <div class="db-status">
-                <div class="pulse-dot"></div>
-                <span>POSTGRESQL LINK: ESTABLISHED</span>
-                <span style="opacity: 0.5; margin-left: 10px;">| STORAGE: JSONB SECURE</span>
+            <h1>Neural Tutor <span style="font-weight: 400; opacity: 0.8;">Core</span></h1>
+            <div class="status-badge">
+                <div class="pulse"></div>
+                <span>PostgreSQL Cluster v15.2 Active</span>
             </div>
         </header>
 
         <div class="main-grid">
-            <!-- Sidebar HUD -->
+            <!-- Sidebar -->
             <div class="sidebar">
                 <div class="glass-card">
-                    <h3><i class="fas fa-microchip"></i> AGENT HUD</h3>
-                    <div class="agent-item" id="memoryAgent">
-                        <i class="fas fa-brain" style="color: var(--neon-pink)"></i>
-                        <div>
-                            <div style="font-weight: bold; font-size: 0.8rem;">MEMORY AGENT</div>
-                            <div id="memStatus" style="font-size: 0.65rem; opacity: 0.6;">STANDBY</div>
+                    <h3><i class="fas fa-satellite-dish"></i> Agent HUD</h3>
+                    <div class="agent-list">
+                        <div class="agent-row" id="memoryAgent">
+                            <i class="fas fa-brain"></i>
+                            <div>
+                                <div style="font-weight: bold; font-size: 0.85rem;">Memory Agent</div>
+                                <div id="memStatus" style="font-size: 0.7rem; opacity: 0.6;">Standby</div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="agent-item" id="decisionAgent">
-                        <i class="fas fa-bolt" style="color: var(--neon-blue)"></i>
-                        <div>
-                            <div style="font-weight: bold; font-size: 0.8rem;">DECISION AGENT</div>
-                            <div style="font-size: 0.65rem; opacity: 0.6;">STANDBY</div>
+                        <div class="agent-row" id="decisionAgent">
+                            <i class="fas fa-microchip"></i>
+                            <div>
+                                <div style="font-weight: bold; font-size: 0.85rem;">Decision Agent</div>
+                                <div id="decStatus" style="font-size: 0.7rem; opacity: 0.6;">Standby</div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="glass-card" style="margin-top: 20px;">
-                    <h3><i class="fas fa-database"></i> NEURAL PROFILE</h3>
-                    <div class="stat-grid">
-                        <div class="stat-card">
-                            <div class="stat-val" id="sessionCount">0</div>
-                            <div class="stat-lab">SESSIONS</div>
+                <div class="glass-card" style="margin-top: 25px;">
+                    <h3><i class="fas fa-user-astronaut"></i> Neural Profile</h3>
+                    <div class="stats-container">
+                        <div class="stat-pill">
+                            <div class="val" id="sessionCount">0</div>
+                            <div class="lab">Sessions</div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-val" id="engagementLevel">0%</div>
-                            <div class="stat-lab">SYNC LEVEL</div>
+                        <div class="stat-pill">
+                            <div class="val" id="engagementLevel">0%</div>
+                            <div class="lab">Sync</div>
                         </div>
                     </div>
-                    <div style="margin-top: 15px;">
-                        <label style="margin: 0; font-size: 0.65rem;">PRIMARY STRENGTH</label>
-                        <div id="topStrength" style="color: var(--neon-green); font-family: 'Orbitron'; font-size: 0.8rem; margin-top: 5px;">AWAITING DATA</div>
+                    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--glass-border);">
+                        <label>Primary Strength</label>
+                        <div id="topStrength" style="color: #fff; font-family: 'Orbitron'; font-size: 0.9rem; text-shadow: 0 0 5px var(--neon-pink);">Awaiting Data</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Workspace -->
+            <!-- Main Terminal -->
             <div class="workspace">
                 <div class="glass-card">
-                    <div class="tabs">
-                        <button class="tab-btn active">TERMINAL</button>
-                        <button class="tab-btn">STUDY TOPICS</button>
-                        <button class="tab-btn">PLANNER</button>
+                    <div class="workspace-tabs">
+                        <button class="tab active">Core Terminal</button>
+                        <button class="tab">Study Topics</button>
+                        <button class="tab">Course Planner</button>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                        <div>
-                            <label>SUBJECT MODULE</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="control-group">
+                            <label>Subject Module</label>
                             <select id="subject">
-                                <option value="maths">MATHEMATICS</option>
-                                <option value="science">SCIENCE CORE</option>
-                                <option value="computing">COMPUTER SCIENCE</option>
-                                <option value="english">ENGLISH LIT</option>
+                                <option value="maths">Mathematics</option>
+                                <option value="science">Science Core</option>
+                                <option value="computing">Computer Science</option>
+                                <option value="english">English Lit</option>
                             </select>
                         </div>
-                        <div>
-                            <label>TIER LEVEL</label>
+                        <div class="control-group">
+                            <label>Academic Tier</label>
                             <select id="level">
-                                <option value="foundation">FOUNDATION</option>
-                                <option value="higher">HIGHER</option>
+                                <option value="foundation">Foundation</option>
+                                <option value="higher">Higher Tier</option>
                             </select>
                         </div>
                     </div>
 
-                    <label>CORE QUERY INPUT</label>
-                    <textarea id="question" rows="5" placeholder="Enter query for Neural Core..."></textarea>
+                    <div class="control-group">
+                        <label>Neural Query Input</label>
+                        <textarea id="question" rows="5" placeholder="Transmit query to Neural Core..."></textarea>
+                    </div>
 
-                    <button class="execute-btn" onclick="executeNeuralQuery()">Execute Neural Link</button>
-                    <div class="shimmer" id="shimmer"></div>
+                    <button class="btn-execute" onclick="transmitToCore()">Execute Neural Link</button>
+                    
+                    <div class="loading-bar" id="loader">
+                        <div class="loading-fill"></div>
+                    </div>
 
-                    <div class="response-box" id="responseBox">
-                        <div style="color: var(--neon-blue); font-size: 0.7rem; font-family: 'Orbitron'; margin-bottom: 10px;">> DECODED STREAM:</div>
-                        <div id="responseText"></div>
+                    <div class="output-terminal" id="outputBox">
+                        <div style="color: var(--neon-pink); font-size: 0.75rem; font-family: 'Orbitron'; margin-bottom: 12px; letter-spacing: 2px;">
+                            > Incoming Stream:
+                        </div>
+                        <div id="outputText"></div>
                     </div>
                 </div>
             </div>
@@ -330,83 +364,67 @@
     </div>
 
     <script>
-        // --- CONFIGURATION ---
         const API_URL = 'https://n8n.srv1090894.hstgr.cloud/webhook/tutor'.trim();
-        // Generates a unique student ID for this session
-        const STUDENT_ID = 'STU_' + Math.floor(1000 + Math.random() * 9000);
+        const STUDENT_ID = 'NEURAL_STU_' + Math.floor(1000 + Math.random() * 9000);
 
-        async function executeNeuralQuery() {
-            const questionEl = document.getElementById('question');
-            const question = questionEl.value.trim();
-            
-            if(!question) {
-                alert("INPUT REQUIRED: Please enter a query.");
-                return;
-            }
+        async function transmitToCore() {
+            const questionVal = document.getElementById('question').value.trim();
+            if(!questionVal) return;
 
-            // UI Initial State
-            document.getElementById('shimmer').style.display = 'block';
-            document.getElementById('responseBox').style.display = 'none';
+            // UI Reset
+            document.getElementById('loader').style.display = 'block';
+            document.getElementById('outputBox').style.display = 'none';
             const memAgent = document.getElementById('memoryAgent');
             memAgent.classList.add('active');
-            document.getElementById('memStatus').innerText = 'READING DATA CORE...';
+            document.getElementById('memStatus').innerText = 'Querying Postgres...';
 
             try {
-                // Build Payload
                 const payload = {
                     action: 'chat',
                     studentId: STUDENT_ID,
                     data: {
-                        question: question,
+                        question: questionVal,
                         subject: document.getElementById('subject').value,
                         level: document.getElementById('level').value
                     }
                 };
 
-                // --- BULLETPROOF URL BUILDING ---
+                // Create safe URL
                 const jsonStr = JSON.stringify(payload);
                 const encodedData = encodeURIComponent(jsonStr);
-                const fullURL = `${API_URL}?data=${encodedData}`;
+                const finalUrl = `${API_URL}?data=${encodedData}`;
 
-                console.log("Initiating Link to:", fullURL);
-
-                // Simple GET request to bypass CORS preflight
-                const response = await fetch(fullURL, {
-                    method: 'GET',
-                    mode: 'cors'
-                });
+                const response = await fetch(finalUrl);
 
                 if (!response.ok) {
                     const errorMsg = await response.text();
-                    throw new Error(`CORE_FAILURE: ${response.status} - ${errorMsg}`);
+                    throw new Error(`Link Failure: ${response.status} - ${errorMsg}`);
                 }
 
                 const data = await response.json();
 
-                // --- UI UPDATE ---
-                document.getElementById('responseBox').style.display = 'block';
-                document.getElementById('responseText').innerHTML = data.answer || data.response || "No data streamed from core.";
+                // Display Response
+                document.getElementById('outputBox').style.display = 'block';
+                document.getElementById('outputText').innerHTML = data.answer || "No stream received.";
                 
-                // Update Agentic Insights from PostgreSQL result
+                // Update HUD Insights
                 if (data.agentic_insights) {
                     document.getElementById('sessionCount').innerText = data.agentic_insights.sessions || 0;
                     document.getElementById('topStrength').innerText = (data.agentic_insights.focus_area || "General").toUpperCase();
-                    // Basic engagement formula: 10% per session up to 100%
-                    const engVal = Math.min((data.agentic_insights.sessions || 0) * 10, 100);
-                    document.getElementById('engagementLevel').innerText = engVal + '%';
+                    
+                    const syncLevel = Math.min((data.agentic_insights.sessions || 0) * 10, 100);
+                    document.getElementById('engagementLevel').innerText = syncLevel + '%';
                 }
 
-                // Render Math Formulas if present
                 if (window.MathJax) MathJax.typesetPromise();
 
             } catch (err) {
-                console.error("NEURAL LINK ERROR:", err);
-                alert("CRITICAL ERROR: " + err.message);
+                console.error("Core Error:", err);
+                alert("Neural Core Error: " + err.message);
             } finally {
-                // UI Reset State
-                document.getElementById('shimmer').style.display = 'none';
+                document.getElementById('loader').style.display = 'none';
                 memAgent.classList.remove('active');
-                document.getElementById('memStatus').innerText = 'STANDBY';
+                document.getElementById('memStatus').innerText = 'Standby';
             }
         }
     </script>
