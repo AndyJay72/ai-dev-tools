@@ -3,20 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GCSE AI Tutor - Agentic Edition</title>
+    <title>GCSE AI Tutor | Neural-Postgres v2.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- MathJax Configuration -->
     <script>
-        MathJax = {
-            tex: {
-                inlineMath: [['$', '$'], ['\\(', '\\)']]
-            },
-            svg: {
-                fontCache: 'global'
-            }
-        };
+        MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }, svg: { fontCache: 'global' } };
     </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
@@ -27,1190 +19,373 @@
             --neon-blue: #4895ef;
             --neon-green: #4ade80;
             --neon-yellow: #fbbf24;
-            --frosted-glass-bg: rgba(255, 255, 255, 0.08);
-            --text-light: #e0e0e0;
-            --text-dark: #f0f0f0;
-            --border-glow: rgba(247, 37, 133, 0.5);
             --bg-dark: #1a0033;
-            --card-bg: rgba(25, 0, 50, 0.7);
-            --code-bg: rgba(0, 0, 0, 0.4);
-            --gradient-1: #1f013d;
-            --gradient-2: #0a0112;
-            --gradient-3: #2d025b;
+            --card-bg: rgba(255, 255, 255, 0.08);
+            --border-glow: rgba(247, 37, 133, 0.4);
+            --text-main: #e0e0e0;
         }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Share Tech Mono', monospace;
-            color: var(--text-dark);
-        }
-        
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            background: linear-gradient(135deg, var(--gradient-1) 0%, var(--gradient-2) 50%, var(--gradient-3) 100%);
+            background: linear-gradient(135deg, #1a0033 0%, #0a0112 100%);
+            color: var(--text-main);
+            font-family: 'Share Tech Mono', monospace;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
+            padding: 10px;
             overflow-x: hidden;
         }
-        
+
+        /* Subtle Scanline Effect */
+        body::after {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 1px, transparent 1px, transparent 2px);
+            pointer-events: none;
+            z-index: 10;
+        }
+
         .container {
             width: 100%;
-            max-width: 1600px;
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 20px;
-            flex-grow: 1;
             display: flex;
             flex-direction: column;
             gap: 20px;
         }
-        
+
         header {
-            background: var(--frosted-glass-bg);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            box-shadow: 0 0 25px var(--border-glow);
-            text-align: center;
-            padding: 30px;
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
             border: 1px solid rgba(247, 37, 133, 0.3);
-            position: relative;
-        }
-
-        header::before {
-            content: '';
-            position: absolute;
-            inset: -2px;
-            border: 2px solid var(--neon-pink);
             border-radius: 15px;
-            pointer-events: none;
-            opacity: 0.2;
-            animation: borderFade 3s infinite alternate;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 0 20px var(--border-glow);
         }
 
-        @keyframes borderFade {
-            from { opacity: 0.2; }
-            to { opacity: 0.6; }
-        }
-        
         h1 {
             font-family: 'Orbitron', sans-serif;
-            font-size: 2.5em;
+            font-size: clamp(1.5rem, 5vw, 2.5rem);
             background: linear-gradient(90deg, var(--neon-pink), var(--neon-blue));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 10px;
-        }
-        
-        .subtitle {
-            font-size: 1.1em;
-            color: var(--neon-blue);
-            font-weight: 300;
+            letter-spacing: 2px;
         }
 
-        .badge {
-            display: inline-block;
-            padding: 5px 12px;
-            background: linear-gradient(135deg, var(--neon-purple), var(--neon-pink));
-            border-radius: 20px;
-            font-size: 0.8em;
-            margin-left: 10px;
-            font-weight: 700;
+        .db-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 0.75rem;
+            color: var(--neon-green);
+            margin-top: 10px;
+            text-transform: uppercase;
         }
-        
-        .dashboard-grid {
+
+        .pulse {
+            width: 8px; height: 8px;
+            background: var(--neon-green);
+            border-radius: 50%;
+            animation: pulse-glow 1.5s infinite;
+        }
+
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
+            100% { box-shadow: 0 0 0 10px rgba(74, 222, 128, 0); }
+        }
+
+        /* Responsive Grid */
+        .main-grid {
             display: grid;
-            grid-template-columns: 300px 1fr;
+            grid-template-columns: 1fr;
             gap: 20px;
         }
 
-        .sidebar {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+        @media (min-width: 1024px) {
+            .main-grid { grid-template-columns: 320px 1fr; }
         }
 
-        .main-content {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        
         .glass-card {
-            background: var(--frosted-glass-bg);
+            background: var(--card-bg);
             backdrop-filter: blur(10px);
             border-radius: 15px;
             padding: 20px;
-            border: 1px solid rgba(247, 37, 133, 0.2);
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(72, 149, 239, 0.2);
             transition: all 0.3s ease;
         }
-        
+
         .glass-card:hover {
-            border-color: var(--neon-pink);
-            box-shadow: 0 0 30px var(--border-glow);
-        }
-
-        .glass-card h3 {
-            font-family: 'Orbitron', sans-serif;
-            color: var(--neon-blue);
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .agent-status {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .agent-item {
-            background: var(--code-bg);
-            padding: 12px;
-            border-radius: 8px;
-            border-left: 3px solid var(--neon-pink);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .agent-item.active {
-            border-left-color: var(--neon-green);
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-
-        .agent-icon {
-            font-size: 1.5em;
-        }
-
-        .agent-info {
-            flex: 1;
-        }
-
-        .agent-name {
-            font-weight: 700;
-            color: var(--neon-blue);
-            font-size: 0.9em;
-        }
-
-        .agent-desc {
-            font-size: 0.75em;
-            color: var(--text-light);
-            margin-top: 3px;
-        }
-
-        .stat-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .stat-item {
-            background: var(--code-bg);
-            padding: 12px;
-            border-radius: 8px;
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 1.8em;
-            font-weight: 700;
-            color: var(--neon-pink);
-            font-family: 'Orbitron', sans-serif;
-        }
-
-        .stat-label {
-            font-size: 0.75em;
-            color: var(--text-light);
-            margin-top: 5px;
-        }
-
-        .strategy-badge {
-            display: inline-block;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.85em;
-            font-weight: 700;
-            margin-top: 10px;
-        }
-
-        .strategy-advanced {
-            background: linear-gradient(135deg, #7209b7, #f72585);
-        }
-
-        .strategy-balanced {
-            background: linear-gradient(135deg, #4895ef, #4ade80);
-        }
-
-        .strategy-encouraging {
-            background: linear-gradient(135deg, #fbbf24, #f59e0b);
-        }
-        
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-        
-        .tab-btn {
-            flex: 1;
-            min-width: 140px;
-            background: var(--card-bg);
-            border: 2px solid var(--neon-purple);
-            color: var(--text-light);
-            padding: 12px 20px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 0.95em;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .tab-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(247, 37, 133, 0.3), transparent);
-            transition: left 0.5s;
-        }
-        
-        .tab-btn:hover::before {
-            left: 100%;
-        }
-        
-        .tab-btn:hover {
-            border-color: var(--neon-pink);
-            box-shadow: 0 0 20px var(--border-glow);
-            transform: scale(1.03);
-        }
-        
-        .tab-btn.active {
-            background: linear-gradient(135deg, var(--neon-purple), var(--neon-pink));
             border-color: var(--neon-pink);
             box-shadow: 0 0 25px var(--border-glow);
         }
-        
-        .tab-content {
-            display: none;
-        }
-        
-        .tab-content.active {
-            display: block;
-            animation: fadeIn 0.5s ease;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .input-group {
-            margin-bottom: 15px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--neon-blue);
-            font-weight: 600;
-            font-size: 0.9em;
-        }
-        
-        input, select, textarea {
-            width: 100%;
-            padding: 12px;
-            background: var(--code-bg);
-            border: 2px solid rgba(114, 9, 183, 0.5);
-            border-radius: 8px;
-            color: var(--text-light);
-            font-size: 1em;
-            transition: all 0.3s ease;
-        }
-        
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: var(--neon-pink);
-            box-shadow: 0 0 15px var(--border-glow);
-        }
-        
-        textarea {
-            min-height: 100px;
-            resize: vertical;
-            font-family: 'Share Tech Mono', monospace;
-        }
-        
-        button {
-            background: linear-gradient(135deg, var(--neon-purple), var(--neon-pink));
-            color: white;
-            border: none;
-            padding: 14px 28px;
-            border-radius: 8px;
-            font-size: 1em;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(247, 37, 133, 0.4);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        button::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.3);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
-        }
-        
-        button:hover::after {
-            width: 300px;
-            height: 300px;
-        }
-        
-        button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 25px rgba(247, 37, 133, 0.6);
-        }
-        
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        .response-box {
-            background: var(--code-bg);
-            border: 2px solid var(--neon-purple);
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 20px;
-            min-height: 100px;
-            color: var(--text-light);
-            line-height: 1.7;
-        }
-        
-        .response-box h4 {
-            color: var(--neon-blue);
-            margin-bottom: 12px;
+
+        h3 {
             font-family: 'Orbitron', sans-serif;
-        }
-        
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
+            font-size: 0.9rem;
             color: var(--neon-blue);
-        }
-        
-        .loading.active {
-            display: block;
-        }
-        
-        .spinner {
-            border: 3px solid rgba(247, 37, 133, 0.3);
-            border-top: 3px solid var(--neon-pink);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .insight-panel {
-            background: var(--code-bg);
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 15px;
-            border-left: 4px solid var(--neon-green);
-        }
-
-        .insight-title {
-            color: var(--neon-green);
-            font-weight: 700;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
 
-        .recommendations-list {
-            list-style: none;
-            padding: 0;
-        }
-
-        .recommendations-list li {
-            padding: 10px;
-            margin-bottom: 8px;
-            background: rgba(78, 222, 128, 0.1);
-            border-radius: 6px;
-            border-left: 3px solid var(--neon-green);
-        }
-
-        .schedule-item {
-            background: var(--card-bg);
+        /* Sidebar Elements */
+        .agent-hud { display: flex; flex-direction: column; gap: 10px; }
+        .agent-item {
+            background: rgba(0, 0, 0, 0.3);
             padding: 12px;
-            margin-bottom: 10px;
             border-radius: 8px;
-            border-left: 4px solid var(--neon-blue);
+            border-left: 3px solid var(--neon-purple);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .agent-item.active {
+            border-left-color: var(--neon-green);
+            background: rgba(74, 222, 128, 0.1);
         }
 
-        .schedule-day {
-            color: var(--neon-pink);
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-
-        .schedule-subject {
-            color: var(--neon-blue);
-            font-size: 1.1em;
-            margin-bottom: 3px;
-        }
-
-        .schedule-duration {
-            font-size: 0.85em;
-            color: var(--text-light);
-        }
-
-        .milestone {
-            background: var(--code-bg);
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .stat-card {
+            background: rgba(0,0,0,0.2);
             padding: 15px;
-            margin-bottom: 12px;
             border-radius: 8px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .milestone-title {
-            color: var(--neon-blue);
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .milestone-progress {
-            background: rgba(114, 9, 183, 0.3);
-            height: 8px;
-            border-radius: 4px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .milestone-fill {
-            background: linear-gradient(90deg, var(--neon-purple), var(--neon-pink));
-            height: 100%;
-            transition: width 0.5s ease;
-        }
-
-        .milestone.completed .milestone-title {
-            color: var(--neon-green);
-        }
-
-        .milestone.completed .milestone-fill {
-            background: var(--neon-green);
-        }
-
-        .error-message {
-            background: rgba(255, 50, 50, 0.2);
-            border: 2px solid #ff3232;
-            border-radius: 8px;
-            padding: 15px;
-            margin-top: 15px;
-            color: #ff6b6b;
-        }
-
-        footer {
             text-align: center;
-            padding: 20px;
-            margin-top: 40px;
-            color: var(--text-light);
-            font-size: 0.9em;
+            border: 1px solid rgba(255,255,255,0.05);
         }
+        .stat-val { font-family: 'Orbitron', sans-serif; font-size: 1.4rem; color: var(--neon-pink); }
+        .stat-lab { font-size: 0.65rem; color: #aaa; margin-top: 5px; }
+
+        /* Workspace Elements */
+        .tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; }
+        .tab-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--neon-purple);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            white-space: nowrap;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.75rem;
+        }
+        .tab-btn.active { background: var(--neon-purple); border-color: var(--neon-pink); }
+
+        .input-group { margin-top: 15px; }
+        label { display: block; font-size: 0.8rem; color: var(--neon-blue); margin-bottom: 5px; }
         
-        @media (max-width: 1024px) {
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .sidebar {
-                order: 2;
-            }
-
-            .main-content {
-                order: 1;
-            }
+        textarea, select, input {
+            width: 100%;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(114, 9, 183, 0.5);
+            border-radius: 8px;
+            padding: 12px;
+            color: white;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1rem;
         }
 
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 1.8em;
-            }
-            
-            .tabs {
-                flex-direction: column;
-            }
-            
-            .tab-btn {
-                min-width: 100%;
-            }
-            
-            .stat-grid {
-                grid-template-columns: 1fr;
-            }
+        .execute-btn {
+            width: 100%;
+            margin-top: 15px;
+            padding: 15px;
+            background: linear-gradient(135deg, var(--neon-purple), var(--neon-pink));
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(247, 37, 133, 0.3);
         }
+
+        .execute-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(247, 37, 133, 0.5); }
+
+        .response-box {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            border-left: 4px solid var(--neon-blue);
+            line-height: 1.6;
+            display: none;
+        }
+
+        .loading-line {
+            height: 3px;
+            width: 100%;
+            background: linear-gradient(90deg, transparent, var(--neon-pink), transparent);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            display: none;
+            margin-top: 10px;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
     </style>
 </head>
 <body>
+
     <div class="container">
         <header>
-            <h1><i class="fas fa-brain"></i> GCSE AI Tutor <span class="badge">AGENTIC</span></h1>
-            <p class="subtitle">Powered by Memory • Decision • Planning Agents</p>
+            <h1>NEURAL TUTOR <span style="color: var(--neon-pink)">[CORE]</span></h1>
+            <div class="db-status">
+                <div class="pulse"></div>
+                <span>PostgreSQL Instance: Active</span>
+                <span style="opacity: 0.5; margin-left: 10px;">| Sync: 100%</span>
+            </div>
         </header>
 
-        <div class="dashboard-grid">
-            <!-- Sidebar - Agent Status & Student Profile -->
+        <div class="main-grid">
+            <!-- Sidebar / HUD -->
             <div class="sidebar">
-                <!-- AI Agents Status -->
                 <div class="glass-card">
-                    <h3><i class="fas fa-robot"></i> AI Agents</h3>
-                    <div class="agent-status">
-                        <div class="agent-item active" id="memoryAgent">
-                            <div class="agent-icon">🧠</div>
-                            <div class="agent-info">
-                                <div class="agent-name">Memory Agent</div>
-                                <div class="agent-desc">Tracking patterns...</div>
+                    <h3><i class="fas fa-microchip"></i> AGENT HUD</h3>
+                    <div class="agent-hud">
+                        <div class="agent-item" id="memoryAgent">
+                            <i class="fas fa-brain" style="color: var(--neon-pink)"></i>
+                            <div>
+                                <div style="font-weight: bold; font-size: 0.85rem;">MEMORY AGENT</div>
+                                <div id="memStatus" style="font-size: 0.7rem; opacity: 0.7;">Standby</div>
                             </div>
                         </div>
                         <div class="agent-item" id="decisionAgent">
-                            <div class="agent-icon">🎯</div>
-                            <div class="agent-info">
-                                <div class="agent-name">Decision Agent</div>
-                                <div class="agent-desc">Standby</div>
-                            </div>
-                        </div>
-                        <div class="agent-item" id="planningAgent">
-                            <div class="agent-icon">📅</div>
-                            <div class="agent-info">
-                                <div class="agent-name">Planning Agent</div>
-                                <div class="agent-desc">Standby</div>
+                            <i class="fas fa-bullseye" style="color: var(--neon-blue)"></i>
+                            <div>
+                                <div style="font-weight: bold; font-size: 0.85rem;">DECISION AGENT</div>
+                                <div id="decStatus" style="font-size: 0.7rem; opacity: 0.7;">Standby</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Student Profile Stats -->
-                <div class="glass-card">
-                    <h3><i class="fas fa-user-graduate"></i> Your Profile</h3>
+                <div class="glass-card" style="margin-top: 20px;">
+                    <h3><i class="fas fa-database"></i> NEURAL PROFILE</h3>
                     <div class="stat-grid">
-                        <div class="stat-item">
-                            <div class="stat-value" id="sessionCount">0</div>
-                            <div class="stat-label">Sessions</div>
+                        <div class="stat-card">
+                            <div class="stat-val" id="sessionCount">0</div>
+                            <div class="stat-lab">SESSIONS</div>
                         </div>
-                        <div class="stat-item">
-                            <div class="stat-value" id="strengthCount">0</div>
-                            <div class="stat-label">Strengths</div>
+                        <div class="stat-card">
+                            <div class="stat-val" id="engagementLevel">0%</div>
+                            <div class="stat-lab">ENGAGEMENT</div>
                         </div>
                     </div>
-                    <div id="engagementLevel" style="margin-top: 15px; text-align: center; font-size: 0.9em; color: var(--text-light);">
-                        Starting fresh...
-                    </div>
-                    <div id="teachingStrategy"></div>
-                </div>
-
-                <!-- Top Strength & Weaknesses -->
-                <div class="glass-card">
-                    <h3><i class="fas fa-chart-line"></i> Learning Insights</h3>
-                    <div style="margin-bottom: 15px;">
-                        <div style="font-size: 0.85em; color: var(--text-light); margin-bottom: 5px;">Top Strength:</div>
-                        <div id="topStrength" style="color: var(--neon-green); font-weight: 700; font-size: 1.1em;">Not yet identified</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 0.85em; color: var(--text-light); margin-bottom: 5px;">Focus Areas:</div>
-                        <div id="weaknesses" style="color: var(--neon-pink); font-size: 0.9em;">Building your profile...</div>
+                    <div style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+                        <label>TOP_STRENGTH</label>
+                        <div id="topStrength" style="color: var(--neon-green); font-family: 'Orbitron'; font-size: 0.9rem;">ANALYZING...</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Main Content -->
-            <div class="main-content">
+            <!-- Workspace -->
+            <div class="workspace">
                 <div class="glass-card">
                     <div class="tabs">
-                        <button class="tab-btn active" onclick="switchTab('chat')">
-                            <i class="fas fa-comments"></i> Ask Question
-                        </button>
-                        <button class="tab-btn" onclick="switchTab('topics')">
-                            <i class="fas fa-list"></i> Topics
-                        </button>
-                        <button class="tab-btn" onclick="switchTab('homework')">
-                            <i class="fas fa-clipboard-check"></i> Homework
-                        </button>
-                        <button class="tab-btn" onclick="switchTab('schedule')">
-                            <i class="fas fa-calendar"></i> Schedule
-                        </button>
-                        <button class="tab-btn" onclick="switchTab('milestones')">
-                            <i class="fas fa-trophy"></i> Milestones
-                        </button>
+                        <button class="tab-btn active">TERMINAL</button>
+                        <button class="tab-btn">TOPICS</button>
+                        <button class="tab-btn">ASSIGNMENTS</button>
+                        <button class="tab-btn">PLANNER</button>
                     </div>
 
-                    <!-- Chat Tab -->
-                    <div id="chat" class="tab-content active">
-                        <div class="input-group">
-                            <label for="subject"><i class="fas fa-book"></i> Subject</label>
-                            <select id="subject">
-                                <option value="maths">Maths</option>
-                                <option value="english">English</option>
-                                <option value="science">Science</option>
-                                <option value="history">History</option>
-                                <option value="geography">Geography</option>
-                                <option value="computing">Computing</option>
-                            </select>
-                        </div>
-
-                        <div class="input-group">
-                            <label for="level"><i class="fas fa-signal"></i> Tier</label>
-                            <select id="level">
-                                <option value="foundation">Foundation</option>
-                                <option value="higher">Higher</option>
-                            </select>
-                        </div>
-
-                        <div class="input-group">
-                            <label for="question"><i class="fas fa-question-circle"></i> Your Question</label>
-                            <textarea id="question" placeholder="Ask me anything about your GCSE subjects..."></textarea>
-                        </div>
-
-                        <button onclick="askQuestion()">
-                            <i class="fas fa-paper-plane"></i> Ask Tutor
-                        </button>
-
-                        <div class="loading" id="chatLoading">
-                            <div class="spinner"></div>
-                            <p>AI Agents processing...</p>
-                        </div>
-
-                        <div class="response-box" id="chatResponse" style="display: none;">
-                            <h4><i class="fas fa-robot"></i> Tutor Response</h4>
-                            <div id="chatAnswer"></div>
-                        </div>
-
-                        <div class="insight-panel" id="chatInsights" style="display: none;">
-                            <div class="insight-title"><i class="fas fa-lightbulb"></i> AI Recommendations</div>
-                            <ul class="recommendations-list" id="chatRecommendations"></ul>
+                    <div class="input-group">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div>
+                                <label>SUBJECT</label>
+                                <select id="subject">
+                                    <option value="maths">MATHEMATICS</option>
+                                    <option value="science">SCIENCE_CORE</option>
+                                    <option value="computing">COMPUTER_SCIENCE</option>
+                                    <option value="english">ENGLISH_LIT</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label>ACADEMIC_TIER</label>
+                                <select id="level">
+                                    <option value="foundation">FOUNDATION</option>
+                                    <option value="higher">HIGHER_TIER</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Topics Tab -->
-                    <div id="topics" class="tab-content">
-                        <div class="input-group">
-                            <label for="topicSubject"><i class="fas fa-book"></i> Subject</label>
-                            <select id="topicSubject">
-                                <option value="maths">Maths</option>
-                                <option value="english">English</option>
-                                <option value="science">Science</option>
-                                <option value="history">History</option>
-                                <option value="geography">Geography</option>
-                                <option value="computing">Computing</option>
-                            </select>
-                        </div>
-
-                        <div class="input-group">
-                            <label for="topicLevel"><i class="fas fa-signal"></i> Tier</label>
-                            <select id="topicLevel">
-                                <option value="foundation">Foundation</option>
-                                <option value="higher">Higher</option>
-                            </select>
-                        </div>
-
-                        <div class="input-group">
-                            <label for="topicCount"><i class="fas fa-hashtag"></i> Number of Topics</label>
-                            <input type="number" id="topicCount" value="5" min="1" max="15">
-                        </div>
-
-                        <button onclick="generateTopics()">
-                            <i class="fas fa-magic"></i> Generate Personalized Topics
-                        </button>
-
-                        <div class="loading" id="topicsLoading">
-                            <div class="spinner"></div>
-                            <p>AI Agents creating personalized topics...</p>
-                        </div>
-
-                        <div class="response-box" id="topicsResponse" style="display: none;">
-                            <h4><i class="fas fa-list-ul"></i> Study Topics</h4>
-                            <div id="topicList"></div>
-                        </div>
+                    <div class="input-group">
+                        <label>INPUT_QUERY</label>
+                        <textarea id="question" rows="5" placeholder="Enter question for Neural-Postgres Core..."></textarea>
                     </div>
 
-                    <!-- Homework Tab -->
-                    <div id="homework" class="tab-content">
-                        <div class="input-group">
-                            <label for="hwSubject"><i class="fas fa-book"></i> Subject</label>
-                            <select id="hwSubject">
-                                <option value="maths">Maths</option>
-                                <option value="english">English</option>
-                                <option value="science">Science</option>
-                                <option value="history">History</option>
-                                <option value="geography">Geography</option>
-                                <option value="computing">Computing</option>
-                            </select>
-                        </div>
+                    <button class="execute-btn" onclick="executeNeuralQuery()">Execute Query</button>
+                    <div class="loading-line" id="loader"></div>
 
-                        <div class="input-group">
-                            <label for="hwTopic"><i class="fas fa-lightbulb"></i> Topic</label>
-                            <input type="text" id="hwTopic" placeholder="e.g., Quadratic Equations">
-                        </div>
-
-                        <div class="input-group">
-                            <label for="hwQuestions"><i class="fas fa-clipboard-question"></i> Number of Questions</label>
-                            <input type="number" id="hwQuestions" value="5" min="1" max="15">
-                        </div>
-
-                        <div class="input-group">
-                            <label for="hwMarks"><i class="fas fa-star"></i> Total Marks</label>
-                            <input type="number" id="hwMarks" value="25" min="1" max="100">
-                        </div>
-
-                        <button onclick="createHomework()">
-                            <i class="fas fa-file-alt"></i> Create Adaptive Homework
-                        </button>
-
-                        <div class="loading" id="hwLoading">
-                            <div class="spinner"></div>
-                            <p>AI Agents tailoring homework to your level...</p>
-                        </div>
-
-                        <div class="response-box" id="hwResponse" style="display: none;">
-                            <h4><i class="fas fa-clipboard-check"></i> Homework Assignment</h4>
-                            <div id="hwContent"></div>
-                        </div>
-                    </div>
-
-                    <!-- Schedule Tab -->
-                    <div id="schedule" class="tab-content">
-                        <h4 style="color: var(--neon-blue); margin-bottom: 15px;">
-                            <i class="fas fa-calendar-week"></i> Your Personalized Study Schedule
-                        </h4>
-                        <div id="scheduleContent">
-                            <p style="color: var(--text-light); text-align: center; padding: 40px;">
-                                Ask a question to generate your personalized study schedule
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Milestones Tab -->
-                    <div id="milestones" class="tab-content">
-                        <h4 style="color: var(--neon-blue); margin-bottom: 15px;">
-                            <i class="fas fa-trophy"></i> Learning Milestones
-                        </h4>
-                        <div id="milestonesContent">
-                            <p style="color: var(--text-light); text-align: center; padding: 40px;">
-                                Start learning to unlock milestones
-                            </p>
-                        </div>
+                    <div class="response-box" id="responseBox">
+                        <h4 style="color: var(--neon-blue); font-family: 'Orbitron'; font-size: 0.8rem; margin-bottom: 10px;">> DECODED_DATA</h4>
+                        <div id="responseText"></div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <footer>
-            <p>&copy; 2026 GCSE AI Tutor • Agentic Edition • Powered by n8n & OpenAI</p>
-            <p style="margin-top: 8px; font-size: 0.85em;">
-                <span id="studentIdDisplay"></span>
-            </p>
-        </footer>
     </div>
 
     <script>
-        // Configuration
         const API_URL = 'https://n8n.srv1090894.hstgr.cloud/webhook/tutor';
-        const STUDENT_ID = 'student_' + Math.random().toString(36).substr(2, 9);
-        
-        // Initialize
-        document.getElementById('studentIdDisplay').textContent = `Student ID: ${STUDENT_ID}`;
+        const STUDENT_ID = 'NEURAL_' + Math.floor(Math.random() * 9000);
 
-        // Tab switching
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
+        async function executeNeuralQuery() {
+            const question = document.getElementById('question').value;
+            if(!question) return;
+
+            // UI Feedback
+            document.getElementById('loader').style.display = 'block';
+            document.getElementById('responseBox').style.display = 'none';
             
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            document.getElementById(tabName).classList.add('active');
-            event.target.closest('.tab-btn').classList.add('active');
-        }
-
-        // Agent Status Animation
-        function activateAgent(agentId, description) {
-            const agent = document.getElementById(agentId);
-            agent.classList.add('active');
-            agent.querySelector('.agent-desc').textContent = description;
-            
-            setTimeout(() => {
-                agent.classList.remove('active');
-                agent.querySelector('.agent-desc').textContent = 'Standby';
-            }, 3000);
-        }
-
-        // Ask Question Function
-        async function askQuestion() {
-            const question = document.getElementById('question').value.trim();
-            const subject = document.getElementById('subject').value;
-            const level = document.getElementById('level').value;
-
-            if (!question) {
-                alert('Please enter a question');
-                return;
-            }
-
-            showLoading('chatLoading', true);
-            document.getElementById('chatResponse').style.display = 'none';
-            document.getElementById('chatInsights').style.display = 'none';
-
-            // Activate agents
-            activateAgent('memoryAgent', 'Analyzing patterns...');
-            setTimeout(() => activateAgent('decisionAgent', 'Adapting strategy...'), 1000);
-            setTimeout(() => activateAgent('planningAgent', 'Creating plan...'), 2000);
+            // Activate Agent HUD
+            const memAgent = document.getElementById('memoryAgent');
+            memAgent.classList.add('active');
+            document.getElementById('memStatus').innerText = 'Accessing Postgres...';
 
             try {
-                const response = await callAPI({
+                const payload = {
                     action: 'chat',
                     studentId: STUDENT_ID,
                     data: {
-                        message: question,
-                        subject: subject,
-                        level: level
+                        question: question,
+                        subject: document.getElementById('subject').value,
+                        level: document.getElementById('level').value
                     }
-                });
-
-                showLoading('chatLoading', false);
-                displayChatResponse(response);
-                updateProfileFromResponse(response);
-
-                if (window.MathJax) {
-                    MathJax.typesetPromise();
-                }
-            } catch (error) {
-                showLoading('chatLoading', false);
-                showError('chatResponse', error.message);
-            }
-        }
-
-        // Display Chat Response
-        function displayChatResponse(response) {
-            document.getElementById('chatResponse').style.display = 'block';
-            document.getElementById('chatAnswer').innerHTML = formatText(response.response || response.text);
-
-            // Show AI insights
-            if (response.recommendations || response.agenticInsights) {
-                document.getElementById('chatInsights').style.display = 'block';
-                const recList = document.getElementById('chatRecommendations');
-                recList.innerHTML = '';
-
-                if (response.recommendations) {
-                    if (response.recommendations.nextTopic) {
-                        recList.innerHTML += `<li><strong>Next Topic:</strong> ${response.recommendations.nextTopic}</li>`;
-                    }
-                    if (response.recommendations.studyTip) {
-                        recList.innerHTML += `<li><strong>Study Tip:</strong> ${response.recommendations.studyTip}</li>`;
-                    }
-                    if (response.recommendations.difficultyAdjustment) {
-                        recList.innerHTML += `<li><strong>Challenge:</strong> ${response.recommendations.difficultyAdjustment}</li>`;
-                    }
-                }
-            }
-        }
-
-        // Generate Topics Function
-        async function generateTopics() {
-            const subject = document.getElementById('topicSubject').value;
-            const level = document.getElementById('topicLevel').value;
-            const count = parseInt(document.getElementById('topicCount').value);
-
-            showLoading('topicsLoading', true);
-            document.getElementById('topicsResponse').style.display = 'none';
-
-            activateAgent('memoryAgent', 'Reviewing history...');
-            setTimeout(() => activateAgent('decisionAgent', 'Personalizing...'), 1000);
-
-            try {
-                const response = await callAPI({
-                    action: 'topics',
-                    studentId: STUDENT_ID,
-                    data: {
-                        subject: subject,
-                        level: level,
-                        count: count
-                    }
-                });
-
-                showLoading('topicsLoading', false);
-                document.getElementById('topicsResponse').style.display = 'block';
-                
-                const topicList = document.getElementById('topicList');
-                topicList.innerHTML = '';
-
-                if (response.topics && response.topics.length > 0) {
-                    response.topics.forEach((topic, index) => {
-                        topicList.innerHTML += `
-                            <div class="schedule-item" style="border-left-color: var(--neon-pink);">
-                                <div style="color: var(--neon-blue); font-weight: 700; margin-bottom: 5px;">
-                                    ${index + 1}. ${topic.name}
-                                </div>
-                                <div style="color: var(--text-light); font-size: 0.9em;">
-                                    ${topic.description}
-                                </div>
-                            </div>
-                        `;
-                    });
-                }
-
-                updateProfileFromResponse(response);
-            } catch (error) {
-                showLoading('topicsLoading', false);
-                showError('topicsResponse', error.message);
-            }
-        }
-
-        // Create Homework Function
-        async function createHomework() {
-            const subject = document.getElementById('hwSubject').value;
-            const topic = document.getElementById('hwTopic').value.trim();
-            const questions = parseInt(document.getElementById('hwQuestions').value);
-            const marks = parseInt(document.getElementById('hwMarks').value);
-
-            if (!topic) {
-                alert('Please enter a homework topic');
-                return;
-            }
-
-            showLoading('hwLoading', true);
-            document.getElementById('hwResponse').style.display = 'none';
-
-            activateAgent('memoryAgent', 'Analyzing level...');
-            setTimeout(() => activateAgent('decisionAgent', 'Adapting difficulty...'), 1000);
-            setTimeout(() => activateAgent('planningAgent', 'Structuring...'), 2000);
-
-            try {
-                const response = await callAPI({
-                    action: 'assign_homework',
-                    studentId: STUDENT_ID,
-                    data: {
-                        subject: subject,
-                        topic: topic,
-                        questions: questions,
-                        totalMarks: marks
-                    }
-                });
-
-                showLoading('hwLoading', false);
-                document.getElementById('hwResponse').style.display = 'block';
-                
-                const hwContent = document.getElementById('hwContent');
-                
-                if (response.homework) {
-                    hwContent.innerHTML = `
-                        <div style="background: var(--card-bg); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                            <div style="color: var(--neon-blue); font-weight: 700; margin-bottom: 10px;">
-                                ${response.homework.subject} - ${response.homework.topic}
-                            </div>
-                            <div style="font-size: 0.85em; color: var(--text-light);">
-                                Difficulty: ${response.homework.difficulty || 'Adaptive'}<br>
-                                ${response.homework.personalizedNotes || ''}
-                            </div>
-                        </div>
-                        <div style="margin-top: 15px;">
-                            ${formatText(response.homework.rawText || response.response)}
-                        </div>
-                    `;
-                } else {
-                    hwContent.innerHTML = formatText(response.response || response.text);
-                }
-
-                updateProfileFromResponse(response);
-
-                if (window.MathJax) {
-                    MathJax.typesetPromise();
-                }
-            } catch (error) {
-                showLoading('hwLoading', false);
-                showError('hwResponse', error.message);
-            }
-        }
-
-        // Update Profile from Response
-        function updateProfileFromResponse(response) {
-            if (!response.agenticInsights) return;
-
-            const { memory, decision, planning } = response.agenticInsights;
-
-            // Update stats
-            if (memory) {
-                document.getElementById('sessionCount').textContent = memory.sessionCount || 0;
-                document.getElementById('strengthCount').textContent = 
-                    Object.keys(memory.topStrength ? {[memory.topStrength]: 1} : {}).length;
-                
-                const engagementMap = {
-                    'high': { text: 'High Engagement', color: 'var(--neon-green)' },
-                    'medium': { text: 'Medium Engagement', color: 'var(--neon-yellow)' },
-                    'low': { text: 'Building Momentum', color: 'var(--neon-blue)' }
                 };
-                const engagement = engagementMap[memory.engagementLevel] || engagementMap['low'];
-                document.getElementById('engagementLevel').innerHTML = 
-                    `<strong style="color: ${engagement.color}">${engagement.text}</strong>`;
 
-                // Top strength
-                document.getElementById('topStrength').textContent = 
-                    memory.topStrength || 'Building profile...';
+                const response = await fetch(`${API_URL}?data=${encodeURIComponent(JSON.stringify(payload))}`);
+                const data = await response.json();
 
-                // Weaknesses
-                if (memory.weaknesses && memory.weaknesses.length > 0) {
-                    document.getElementById('weaknesses').textContent = memory.weaknesses.join(', ');
-                } else {
-                    document.getElementById('weaknesses').textContent = 'None identified yet';
+                // Handle AI Response
+                document.getElementById('responseBox').style.display = 'block';
+                document.getElementById('responseText').innerHTML = data.answer || data.response;
+
+                // Update Profile from PostgreSQL
+                if (data.agentic_insights) {
+                    document.getElementById('sessionCount').innerText = data.agentic_insights.sessions;
+                    document.getElementById('topStrength').innerText = data.agentic_insights.focus_area.toUpperCase();
+                    document.getElementById('engagementLevel').innerText = (data.agentic_insights.sessions * 5) + '%';
                 }
+
+                if (window.MathJax) MathJax.typeset();
+
+            } catch (err) {
+                console.error(err);
+                alert("Core Link Failed. Check Console.");
+            } finally {
+                document.getElementById('loader').style.display = 'none';
+                memAgent.classList.remove('active');
+                document.getElementById('memStatus').innerText = 'Standby';
             }
-
-            // Update teaching strategy
-            if (decision && decision.teachingStrategy) {
-                const strategyClass = `strategy-${decision.teachingStrategy}`;
-                document.getElementById('teachingStrategy').innerHTML = `
-                    <span class="strategy-badge ${strategyClass}">
-                        ${decision.teachingStrategy.toUpperCase()} Mode
-                    </span>
-                `;
-            }
-
-            // Update schedule
-            if (planning && planning.schedule && planning.schedule.length > 0) {
-                const scheduleContent = document.getElementById('scheduleContent');
-                scheduleContent.innerHTML = '';
-                
-                planning.schedule.forEach(item => {
-                    scheduleContent.innerHTML += `
-                        <div class="schedule-item">
-                            <div class="schedule-day">${item.day}</div>
-                            <div class="schedule-subject">${item.subject}</div>
-                            <div class="schedule-duration">${item.duration} • ${item.focus}</div>
-                        </div>
-                    `;
-                });
-            }
-
-            // Update milestones
-            if (planning && planning.milestones && planning.milestones.length > 0) {
-                const milestonesContent = document.getElementById('milestonesContent');
-                milestonesContent.innerHTML = '';
-                
-                planning.milestones.forEach(milestone => {
-                    const completed = milestone.completed ? 'completed' : '';
-                    milestonesContent.innerHTML += `
-                        <div class="milestone ${completed}">
-                            <div class="milestone-title">
-                                ${milestone.completed ? '✓ ' : ''}${milestone.title}
-                            </div>
-                            <div class="milestone-progress">
-                                <div class="milestone-fill" style="width: ${milestone.progress}%"></div>
-                            </div>
-                            <div style="text-align: right; margin-top: 5px; font-size: 0.85em; color: var(--text-light);">
-                                ${Math.round(milestone.progress)}%
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-        }
-
-        // API Call Function
-        async function callAPI(requestBody) {
-            console.log('Sending request:', requestBody);
-
-            const url = new URL(API_URL);
-            url.searchParams.set('data', JSON.stringify(requestBody));
-
-            const response = await fetch(url.toString(), {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json'
-                }
-            });
-
-            console.log('Response status:', response.status);
-
-            if (!response.ok) {
-                throw new Error(`API Error: ${response.status} ${response.statusText}`);
-            }
-
-            const data = await response.json();
-            console.log('Response data:', data);
-
-            if (data.success === false) {
-                throw new Error(data.error || 'API request failed');
-            }
-
-            return data;
-        }
-
-        // Utility Functions
-        function showLoading(elementId, show) {
-            const element = document.getElementById(elementId);
-            if (show) {
-                element.classList.add('active');
-            } else {
-                element.classList.remove('active');
-            }
-        }
-
-        function showError(containerId, message) {
-            const container = document.getElementById(containerId);
-            container.style.display = 'block';
-            container.innerHTML = `
-                <div class="error-message">
-                    <i class="fas fa-exclamation-triangle"></i> 
-                    Error: ${message}
-                </div>
-            `;
-        }
-
-        function formatText(text) {
-            if (!text) return '';
-            
-            text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
-            text = text.replace(/\n\n/g, '</p><p>');
-            text = text.replace(/\n/g, '<br>');
-            
-            if (!text.startsWith('<p>')) {
-                text = '<p>' + text + '</p>';
-            }
-            
-            return text;
         }
     </script>
 </body>
