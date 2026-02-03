@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEURAL ARCHITECT | Learning OS v4.0</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>">
+    <title>NEURAL ARCHITECT | Tron Edition</title>
+    
+    <!-- Scholarly Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>🎓</text></svg>">
+    
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -12,47 +15,215 @@
 
     <style>
         :root {
-            --neon-pink: #f72585;
-            --pink-glow: rgba(247, 37, 133, 0.6);
-            --neon-blue: #4895ef;
-            --bg-dark: #080110;
-            --glass: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
+            --tron-blue: #00e5ff;
+            --tron-pink: #ff00ff;
+            --tron-bg: #020205;
+            --tron-grid: rgba(0, 229, 255, 0.1);
+            --glass: rgba(0, 0, 0, 0.7);
+            --glow: 0 0 15px var(--tron-blue);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: var(--bg-dark); color: #f0f0f0; font-family: 'Rajdhani', sans-serif; min-height: 100vh; padding: 15px; overflow-x: hidden; }
-
-        .container { width: 100%; max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 20px; }
-        @media (min-width: 1024px) { .container { grid-template-columns: 360px 1fr; } }
-
-        header { grid-column: 1 / -1; background: var(--glass); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 20px; padding: 25px; text-align: center; border-bottom: 3px solid var(--neon-pink); box-shadow: var(--pink-glow); }
-        h1 { font-family: 'Orbitron'; font-size: clamp(1.5rem, 5vw, 2.5rem); letter-spacing: 5px; text-transform: uppercase; color: #fff; text-shadow: 0 0 10px var(--neon-pink); }
-
-        /* Navigation HUD */
-        .nav-hud { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-        .nav-item { background: rgba(255,255,255,0.02); border: 1px solid var(--neon-blue); color: #fff; padding: 15px; border-radius: 12px; cursor: pointer; font-family: 'Orbitron'; font-size: 0.7rem; transition: 0.3s; display: flex; align-items: center; gap: 15px; }
-        .nav-item:hover, .nav-item.active { background: var(--neon-blue); color: #000; box-shadow: 0 0 20px var(--neon-blue); }
-
-        .glass-card { background: var(--glass); backdrop-filter: blur(30px); border-radius: 24px; padding: 25px; border: 1px solid var(--glass-border); }
-
-        /* Neural Map Styles */
-        .map-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin-top: 20px; }
-        .subject-node { background: rgba(0,0,0,0.4); padding: 15px; border-radius: 15px; text-align: center; border: 1px solid var(--glass-border); }
-        .node-val { font-family: 'Orbitron'; font-size: 1.2rem; color: var(--neon-blue); }
-        .node-lab { font-size: 0.6rem; text-transform: uppercase; margin-top: 5px; color: #888; }
-
-        /* Page Management */
-        .view-section { display: none; }
-        .view-section.active { display: block; animation: fadeIn 0.5s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Terminal Output */
-        .terminal { background: rgba(0,0,0,0.6); padding: 25px; border-radius: 15px; border-left: 4px solid var(--neon-pink); margin-top: 20px; font-family: 'Share Tech Mono'; line-height: 1.6; }
         
-        .btn-neural { width: 100%; background: linear-gradient(135deg, var(--neon-purple), var(--neon-pink)); border: none; color: #fff; padding: 15px; border-radius: 12px; font-family: 'Orbitron'; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-top: 20px; }
+        body {
+            background-color: var(--tron-bg);
+            background-image: 
+                linear-gradient(var(--tron-grid) 1px, transparent 1px),
+                linear-gradient(90deg, var(--tron-grid) 1px, transparent 1px);
+            background-size: 50px 50px;
+            color: #fff;
+            font-family: 'Rajdhani', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding: 10px;
+        }
 
-        input, select, textarea { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--glass-border); border-radius: 10px; padding: 12px; color: #fff; margin-top: 10px; }
+        /* Tron Scanline Effect */
+        body::before {
+            content: " ";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 1024px) {
+            .container { grid-template-columns: 320px 1fr; padding: 20px; }
+        }
+
+        /* Header - Sharp Tron Style */
+        header {
+            grid-column: 1 / -1;
+            background: var(--glass);
+            border: 2px solid var(--tron-blue);
+            box-shadow: var(--glow);
+            padding: 20px;
+            text-align: center;
+            clip-path: polygon(0 0, 98% 0, 100% 30%, 100% 100%, 2% 100%, 0 70%);
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            font-family: 'Orbitron';
+            font-size: clamp(1.5rem, 5vw, 2.5rem);
+            letter-spacing: 8px;
+            text-transform: uppercase;
+            color: #fff;
+            text-shadow: 0 0 20px var(--tron-blue);
+        }
+
+        /* Sidebar Navigation Pad */
+        .sidebar { display: flex; flex-direction: column; gap: 15px; }
+
+        .nav-btn {
+            background: rgba(0,0,0,0.8);
+            border: 1px solid var(--tron-blue);
+            color: var(--tron-blue);
+            padding: 18px;
+            font-family: 'Orbitron';
+            font-size: 0.75rem;
+            cursor: pointer;
+            text-align: left;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            clip-path: polygon(0 0, 90% 0, 100% 20%, 100% 100%, 10% 100%, 0 80%);
+        }
+
+        .nav-btn i { font-size: 1.2rem; }
+
+        .nav-btn:hover, .nav-btn.active {
+            background: var(--tron-blue);
+            color: #000;
+            box-shadow: 0 0 30px var(--tron-blue);
+            transform: translateX(10px);
+        }
+
+        /* Mobile Nav Tweak */
+        @media (max-width: 1024px) {
+            .sidebar { flex-direction: row; overflow-x: auto; padding-bottom: 10px; }
+            .nav-btn { min-width: 180px; transform: none !important; }
+        }
+
+        .main-card {
+            background: var(--glass);
+            border: 1px solid var(--tron-pink);
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.2);
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            min-height: 600px;
+            position: relative;
+        }
+
+        .main-card::before {
+            content: "";
+            position: absolute;
+            top: -2px; left: -2px; width: 20px; height: 20px;
+            border-top: 3px solid var(--tron-pink);
+            border-left: 3px solid var(--tron-pink);
+        }
+
+        /* Input Elements */
+        .control-group { margin-bottom: 25px; }
+        label { display: block; font-family: 'Orbitron'; font-size: 0.7rem; color: var(--tron-pink); margin-bottom: 10px; letter-spacing: 2px; }
+
+        select, textarea, input {
+            width: 100%;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--tron-blue);
+            color: #fff;
+            padding: 15px;
+            font-family: 'Share Tech Mono';
+            font-size: 1rem;
+            outline: none;
+        }
+
+        select:focus, textarea:focus { border-color: var(--tron-pink); box-shadow: 0 0 15px var(--tron-pink); }
+
+        .btn-action {
+            width: 100%;
+            background: transparent;
+            border: 2px solid var(--tron-pink);
+            color: var(--tron-pink);
+            padding: 20px;
+            font-family: 'Orbitron';
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.3s;
+            letter-spacing: 3px;
+        }
+
+        .btn-action:hover {
+            background: var(--tron-pink);
+            color: #fff;
+            box-shadow: 0 0 40px var(--tron-pink);
+        }
+
+        /* Section Visibility */
+        .view-pane { display: none; }
+        .view-pane.active { display: block; animation: slideIn 0.4s ease-out; }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Terminal Display */
+        .terminal-output {
+            background: rgba(0, 10, 20, 0.8);
+            border: 1px solid var(--tron-blue);
+            padding: 25px;
+            margin-top: 25px;
+            font-family: 'Share Tech Mono';
+            line-height: 1.7;
+            color: var(--tron-blue);
+            position: relative;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .terminal-output::after {
+            content: "_";
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* Neural Map Nodes */
+        .map-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 20px; margin-top: 20px; }
+        .map-node {
+            border: 1px solid var(--tron-blue);
+            padding: 20px;
+            text-align: center;
+            background: rgba(0, 229, 255, 0.05);
+            transition: 0.3s;
+        }
+        .map-node:hover { background: var(--tron-blue); color: #000; box-shadow: 0 0 20px var(--tron-blue); }
+        .node-val { font-family: 'Orbitron'; font-size: 1.5rem; }
+        .node-lab { font-size: 0.7rem; font-weight: bold; margin-top: 10px; }
+
+        /* XP HUD Pill */
+        .xp-pill {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--tron-pink);
+            padding: 20px;
+            text-align: center;
+            margin-top: 20px;
+            clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
+        }
     </style>
 </head>
 <body>
@@ -60,123 +231,164 @@
     <div class="container">
         <header>
             <h1>Neural Architect</h1>
-            <p style="color: var(--neon-blue); letter-spacing: 3px; font-size: 0.7rem;">PERSISTENT LEARNING SYSTEM v4.0</p>
+            <div style="font-size: 0.7rem; color: var(--tron-blue); letter-spacing: 3px;">SYSTEM VERSION 4.0 // TRON PROTOCOL</div>
         </header>
 
-        <!-- Sidebar Navigation -->
+        <!-- Sidebar Navigation (Action Buttons) -->
         <aside class="sidebar">
-            <div class="nav-hud">
-                <div class="nav-item active" onclick="showView('terminal', this)"><i class="fas fa-terminal"></i> CORE TERMINAL</div>
-                <div class="nav-item" onclick="showView('map', this)"><i class="fas fa-project-diagram"></i> NEURAL MAP</div>
-                <div class="nav-item" onclick="showView('modules', this)"><i class="fas fa-microchip"></i> SUBJECT MODULES</div>
-                <div class="nav-item" onclick="showView('homework', this)"><i class="fas fa-file-code"></i> ASSIGNMENTS</div>
-            </div>
+            <button class="nav-btn active" onclick="changeView('terminal', this)">
+                <i class="fas fa-terminal"></i> CORE TERMINAL
+            </button>
+            <button class="nav-btn" onclick="changeView('map', this)">
+                <i class="fas fa-project-diagram"></i> NEURAL MAP
+            </button>
+            <button class="nav-btn" onclick="changeView('modules', this)">
+                <i class="fas fa-microchip"></i> SUBJECT MODULES
+            </button>
+            <button class="nav-btn" onclick="changeView('homework', this)">
+                <i class="fas fa-graduation-cap"></i> ASSIGNMENTS
+            </button>
 
-            <div class="glass-card">
-                <h3 style="font-family: 'Orbitron'; font-size: 0.7rem; color: var(--neon-pink);">NEURAL_SYNC</h3>
-                <div style="font-size: 2rem; font-family: 'Orbitron'; margin: 10px 0;" id="xpDisplay">0</div>
-                <div style="font-size: 0.6rem; color: var(--neon-blue);">TOTAL XP COLLECTED</div>
+            <div class="xp-pill">
+                <div style="font-family: 'Orbitron'; font-size: 0.6rem; color: var(--tron-pink);">NEURAL_SYNC_XP</div>
+                <div id="xpDisplay" style="font-family: 'Orbitron'; font-size: 2rem;">0000</div>
             </div>
         </aside>
 
-        <!-- Main Workspace -->
-        <main class="workspace">
-            <div class="glass-card" style="min-height: 600px;">
-                
-                <!-- View 1: Core Terminal -->
-                <section id="view-terminal" class="view-section active">
-                    <h3 style="color: var(--neon-blue); font-family: 'Orbitron';"><i class="fas fa-comment-dots"></i> AI Q&A TERMINAL</h3>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                        <select id="subject"><option value="maths">MATHEMATICS</option><option value="science">SCIENCE</option><option value="geography">GEOGRAPHY</option></select>
-                        <select id="level"><option value="foundation">FOUNDATION</option><option value="higher">HIGHER</option></select>
+        <!-- Main Content Area -->
+        <main class="main-card">
+            
+            <!-- View: Terminal -->
+            <section id="pane-terminal" class="view-pane active">
+                <h3 style="font-family: 'Orbitron'; margin-bottom: 20px; color: var(--tron-blue);">> USER_QUERY_INTERFACE</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="control-group">
+                        <label>SUBJECT DATABASE</label>
+                        <select id="subject">
+                            <option value="maths">MATHEMATICS</option>
+                            <option value="science">SCIENCE CORE</option>
+                            <option value="geography">GEOGRAPHY</option>
+                            <option value="computing">COMPUTER SCIENCE</option>
+                        </select>
                     </div>
-                    <textarea id="question" rows="5" placeholder="Transmit query to Neural Core..."></textarea>
-                    <button class="btn-neural" onclick="runAction('chat')">EXECUTE NEURAL LINK</button>
-                    <div id="chatOutput" class="terminal" style="display:none;"></div>
-                </section>
-
-                <!-- View 2: Neural Map -->
-                <section id="view-map" class="view-section">
-                    <h3 style="color: var(--neon-blue); font-family: 'Orbitron';"><i class="fas fa-brain"></i> SUBJECT MASTERY MAP</h3>
-                    <p style="font-size: 0.8rem; color: #888;">Real-time sync with PostgreSQL interaction logs.</p>
-                    <div class="map-grid" id="masteryGrid">
-                        <!-- Filled by JS -->
+                    <div class="control-group">
+                        <label>ACADEMIC TIER</label>
+                        <select id="level">
+                            <option value="foundation">FOUNDATION</option>
+                            <option value="higher">HIGHER TIER</option>
+                        </select>
                     </div>
-                </section>
+                </div>
+                <div class="control-group">
+                    <label>INPUT DATA STREAM</label>
+                    <textarea id="question" rows="6" placeholder="Awaiting manual input..."></textarea>
+                </div>
+                <button class="btn-action" onclick="executeNeuralAction('chat')">EXECUTE NEURAL LINK</button>
+                <div id="chatOutput" class="terminal-output" style="display:none;"></div>
+            </section>
 
-                <!-- View 3: Subject Modules -->
-                <section id="view-modules" class="view-section">
-                    <h3 style="color: var(--neon-blue); font-family: 'Orbitron';"><i class="fas fa-book-open"></i> CURRICULUM EXPLORER</h3>
-                    <button class="btn-neural" onclick="runAction('modules')">SCAN SUBJECT FOR MODULES</button>
-                    <div id="moduleList" class="terminal" style="display:none;"></div>
-                </section>
+            <!-- View: Neural Map -->
+            <section id="pane-map" class="view-pane">
+                <h3 style="font-family: 'Orbitron'; margin-bottom: 20px; color: var(--tron-blue);">> SUBJECT_MASTERY_ARRAY</h3>
+                <div class="map-grid" id="masteryGrid">
+                    <!-- Nodes injected by JS -->
+                </div>
+            </section>
 
-                <!-- View 4: Assignments -->
-                <section id="view-homework" class="view-section">
-                    <h3 style="color: var(--neon-blue); font-family: 'Orbitron';"><i class="fas fa-edit"></i> ASSIGNMENT GENERATOR</h3>
-                    <input type="text" id="hwTopic" placeholder="Enter topic (e.g. Tectonic Plates)">
-                    <button class="btn-neural" onclick="runAction('homework')">GENERATE ASSIGNMENT</button>
-                    <div id="hwOutput" class="terminal" style="display:none;"></div>
-                </section>
+            <!-- View: Modules -->
+            <section id="pane-modules" class="view-pane">
+                <h3 style="font-family: 'Orbitron'; margin-bottom: 20px; color: var(--tron-blue);">> CURRICULUM_SCANNER</h3>
+                <button class="btn-action" onclick="executeNeuralAction('modules')">SCAN FOR MODULES</button>
+                <div id="moduleOutput" class="terminal-output" style="display:none;"></div>
+            </section>
 
-            </div>
+            <!-- View: Assignments -->
+            <section id="pane-homework" class="view-pane">
+                <h3 style="font-family: 'Orbitron'; margin-bottom: 20px; color: var(--tron-blue);">> ASSIGNMENT_GENERATOR</h3>
+                <div class="control-group">
+                    <label>MODULE FOCUS</label>
+                    <input type="text" id="hwTopic" placeholder="e.g. Plate Tectonics">
+                </div>
+                <button class="btn-action" onclick="executeNeuralAction('homework')">COMPILE ASSIGNMENT</button>
+                <div id="hwOutput" class="terminal-output" style="display:none;"></div>
+            </section>
+
         </main>
     </div>
 
     <script>
         const API_URL = 'https://n8n.srv1090894.hstgr.cloud/webhook/tutor';
-        let STUDENT_ID = localStorage.getItem('neural_student_id') || 'ARCH_' + Math.floor(Math.random()*9000);
-        localStorage.setItem('neural_student_id', STUDENT_ID);
+        let STUDENT_ID = localStorage.getItem('neural_id') || 'TRON_' + Math.floor(Math.random()*9999);
+        localStorage.setItem('neural_id', STUDENT_ID);
 
-        // Global State
-        let state = { xp: 0, mastery: { maths: 12, science: 45, geography: 5, computing: 0, english: 0 } };
+        let state = {
+            xp: 0,
+            mastery: { maths: 0, science: 0, geography: 0, computing: 0 }
+        };
 
-        function showView(viewId, btn) {
-            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById('view-' + viewId).classList.add('active');
+        function changeView(viewId, btn) {
+            document.querySelectorAll('.view-pane').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('pane-' + viewId).classList.add('active');
             btn.classList.add('active');
-            if(viewId === 'map') renderMap();
+            if(viewId === 'map') refreshNeuralMap();
         }
 
-        function renderMap() {
+        function refreshNeuralMap() {
             const grid = document.getElementById('masteryGrid');
             grid.innerHTML = '';
-            Object.entries(state.mastery).forEach(([sub, val]) => {
-                grid.innerHTML += `<div class="subject-node"><div class="node-val">${val}%</div><div class="node-lab">${sub}</div></div>`;
+            Object.entries(state.mastery).forEach(([subject, val]) => {
+                grid.innerHTML += `
+                    <div class="map-node">
+                        <div class="node-val">${val}%</div>
+                        <div class="node-lab">${subject.toUpperCase()}</div>
+                    </div>
+                `;
             });
         }
 
-        async function runAction(actionType) {
+        async function executeNeuralAction(type) {
             const subject = document.getElementById('subject').value;
             const question = document.getElementById('question').value;
             const topic = document.getElementById('hwTopic').value;
 
-            // Simple UI feedback
-            const outputs = { chat: 'chatOutput', modules: 'moduleList', homework: 'hwOutput' };
-            const outBox = document.getElementById(outputs[actionType]);
-            outBox.style.display = 'block';
-            outBox.innerHTML = "[INITIATING LINK...]";
+            // Resolve target terminal
+            const targetMap = { chat: 'chatOutput', modules: 'moduleOutput', homework: 'hwOutput' };
+            const outputEl = document.getElementById(targetMap[type]);
+            
+            outputEl.style.display = 'block';
+            outputEl.innerHTML = "[ESTABLISHING SECURE PROTOCOL...]";
 
             try {
                 const payload = {
-                    action: actionType,
+                    action: type,
                     studentId: STUDENT_ID,
                     data: { subject, question, topic }
                 };
 
-                const url = `${API_URL}?data=${encodeURIComponent(JSON.stringify(payload))}`;
-                const response = await fetch(url);
+                // GET Webhook with stringified data to bypass CORS preflight
+                const finalUrl = `${API_URL}?data=${encodeURIComponent(JSON.stringify(payload))}`;
+                const response = await fetch(finalUrl);
+
+                if (!response.ok) throw new Error("CORE_DISCONNECT_" + response.status);
+
                 const data = await response.json();
 
                 if (data.answer) {
-                    outBox.innerHTML = data.answer.replace(/\n/g, '<br>');
+                    outputEl.innerHTML = data.answer.replace(/\n/g, '<br>');
+                    // XP Reward Logic
                     state.xp += 10;
-                    document.getElementById('xpDisplay').innerText = state.xp;
-                    if(window.MathJax) MathJax.typesetPromise();
+                    document.getElementById('xpDisplay').innerText = state.xp.toString().padStart(4, '0');
+                    
+                    // Increment subject mastery visually
+                    if(state.mastery[subject] < 100) state.mastery[subject] += 5;
+
+                    if (window.MathJax) MathJax.typesetPromise();
                 }
-            } catch (e) {
-                outBox.innerHTML = "LINK FAILURE: Check n8n workflow.";
+
+            } catch (err) {
+                console.error(err);
+                outputEl.innerHTML = `<span style="color:var(--tron-pink)">[CRITICAL_FAILURE]: ${err.message}</span>`;
             }
         }
     </script>
