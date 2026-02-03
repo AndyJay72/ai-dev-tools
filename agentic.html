@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neural Tutor Core | v2.7 Secure</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <title>Neural Tutor | Learning OS v3.5</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script>
@@ -15,83 +15,251 @@
     <style>
         :root {
             --neon-pink: #f72585;
+            --neon-purple: #7209b7;
             --neon-blue: #4895ef;
+            --neon-green: #4ade80;
             --bg-dark: #080110;
-            --glass-bg: rgba(255, 255, 255, 0.06);
-            --glass-border: rgba(255, 255, 255, 0.12);
-            --text-main: #f0f0f0;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --pink-glow: 0 0 20px rgba(247, 37, 133, 0.6);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
+        
         body {
             background-color: var(--bg-dark);
-            background-image: radial-gradient(circle at 50% 50%, #1a0033 0%, #080110 100%);
-            color: var(--text-main);
-            font-family: 'Share Tech Mono', monospace;
+            background-image: 
+                radial-gradient(circle at 10% 10%, rgba(114, 9, 183, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(247, 37, 133, 0.15) 0%, transparent 40%);
+            color: #e0e0e0;
+            font-family: 'Rajdhani', sans-serif;
             min-height: 100vh;
-            padding: 20px;
+            overflow-x: hidden;
         }
 
-        .container { width: 100%; max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+        /* Level Up Overlay */
+        #levelUpOverlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(247, 37, 133, 0.2);
+            backdrop-filter: blur(10px);
+            z-index: 10000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.5s ease;
+        }
 
-        header, .glass-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
+        .lvl-text {
+            font-family: 'Orbitron';
+            font-size: 5rem;
+            color: #fff;
+            text-shadow: var(--pink-glow);
+            animation: zoomIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes zoomIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+
+        @media (min-width: 1024px) {
+            .container { grid-template-columns: 350px 1fr; }
+        }
+
+        header {
+            grid-column: 1 / -1;
+            background: var(--glass);
+            backdrop-filter: blur(15px);
             border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 25px;
+            text-align: center;
+            border-bottom: 2px solid var(--neon-pink);
+            box-shadow: var(--pink-glow);
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(1.5rem, 5vw, 2.5rem);
+            background: linear-gradient(90deg, var(--neon-pink), var(--neon-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 5px;
+        }
+
+        .sidebar { display: flex; flex-direction: column; gap: 20px; }
+
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(25px);
+            border-radius: 20px;
+            padding: 25px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+
+        /* XP & Level HUD */
+        .rank-box {
+            text-align: center;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--glass-border);
+            margin-bottom: 15px;
+        }
+        #rankName { color: var(--neon-blue); font-weight: bold; letter-spacing: 2px; font-size: 0.8rem; }
+        #currentLevel { font-family: 'Orbitron'; font-size: 2.5rem; color: #fff; text-shadow: var(--pink-glow); }
+
+        .xp-bar-container {
+            background: rgba(255,255,255,0.05);
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 10px 0;
+            border: 1px solid var(--glass-border);
+        }
+        #xpFill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--neon-purple), var(--neon-pink));
+            box-shadow: 0 0 10px var(--neon-pink);
+            transition: width 0.5s ease-out;
+        }
+
+        h3 { font-family: 'Orbitron'; font-size: 0.75rem; color: var(--neon-blue); margin-bottom: 15px; letter-spacing: 2px; }
+
+        /* Terminal Components */
+        .tabs { display: flex; gap: 10px; margin-bottom: 25px; }
+        .tab-btn {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--neon-purple);
+            color: #fff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Orbitron';
+            font-size: 0.65rem;
+            transition: 0.3s;
+        }
+        .tab-btn.active { background: var(--neon-purple); box-shadow: 0 0 15px var(--neon-purple); }
+
+        .input-group { margin-bottom: 20px; }
+        label { display: block; font-size: 0.7rem; color: var(--neon-blue); margin-bottom: 8px; font-weight: bold; }
+        
+        select, textarea, input {
+            width: 100%;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 12px;
+            color: #fff;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .btn-execute {
+            width: 100%;
+            background: linear-gradient(135deg, var(--neon-purple), var(--neon-pink));
+            border: none;
+            color: #fff;
+            padding: 18px;
+            border-radius: 12px;
+            font-family: 'Orbitron';
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: var(--pink-glow);
+        }
+
+        .terminal-box {
+            background: rgba(0,0,0,0.6);
             border-radius: 15px;
             padding: 25px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            margin-top: 25px;
+            border-left: 4px solid var(--neon-pink);
+            display: none;
+            min-height: 100px;
         }
 
-        h1 { font-family: 'Orbitron', sans-serif; text-align: center; color: var(--neon-pink); text-shadow: 0 0 10px var(--neon-pink); text-transform: uppercase; letter-spacing: 3px; }
+        /* Activity Items */
+        .log-item {
+            font-size: 0.75rem;
+            padding: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            color: var(--neon-green);
+        }
 
-        .main-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
-        @media (min-width: 1024px) { .main-grid { grid-template-columns: 320px 1fr; } }
-
-        .stat-pill { background: rgba(0,0,0,0.4); padding: 15px; border-radius: 10px; text-align: center; border: 1px solid var(--neon-pink); margin-top: 10px; }
-        .stat-val { font-family: 'Orbitron'; font-size: 1.5rem; color: #fff; }
-
-        label { display: block; color: var(--neon-pink); font-weight: bold; margin: 15px 0 5px; font-size: 0.8rem; }
-        
-        select, textarea { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--glass-border); border-radius: 8px; padding: 12px; color: #fff; }
-
-        .btn-execute { width: 100%; background: var(--neon-pink); border: none; color: #fff; padding: 15px; border-radius: 8px; font-family: 'Orbitron'; cursor: pointer; margin-top: 20px; font-weight: bold; }
-
-        .output-box { background: rgba(0,0,0,0.6); padding: 20px; border-radius: 10px; border-left: 5px solid var(--neon-pink); margin-top: 20px; display: none; line-height: 1.6; }
     </style>
 </head>
 <body>
 
+    <!-- Level Up Modal -->
+    <div id="levelUpOverlay">
+        <div class="lvl-text">NEURAL UPGRADE</div>
+        <div style="color: var(--neon-blue); font-family: 'Orbitron'; font-size: 1.2rem;">LEVEL <span id="newLevelNum">2</span> ACHIEVED</div>
+        <button onclick="closeLevelUp()" style="margin-top: 30px; background: none; border: 1px solid #fff; color: #fff; padding: 10px 20px; cursor: pointer; font-family: 'Orbitron';">RESUME SYNC</button>
+    </div>
+
     <div class="container">
         <header>
-            <h1>Neural Tutor <span style="font-weight: 400; opacity: 0.7;">Core</span></h1>
+            <h1><i class="fas fa-brain"></i> NEURAL TUTOR</h1>
+            <p style="color: var(--neon-blue); letter-spacing: 3px; font-size: 0.75rem;">SYNCING WITH POSTGRES_DB • CORE v3.5</p>
         </header>
 
-        <div class="main-grid">
-            <div class="sidebar">
-                <div class="glass-card">
-                    <h3 style="color: var(--neon-blue); font-family: 'Orbitron'; font-size: 0.8rem;">STUDENT PROFILE</h3>
-                    <div class="stat-pill">
-                        <div class="stat-val" id="sessionCount">0</div>
-                        <div style="font-size: 0.6rem; color: var(--neon-pink);">SESSIONS</div>
-                    </div>
-                    <div id="topStrength" style="text-align: center; margin-top: 15px; font-size: 0.9rem; color: var(--neon-blue);">AWAITING SYNC</div>
+        <aside class="sidebar">
+            <!-- XP & Rank HUD -->
+            <div class="glass-card">
+                <div class="rank-box">
+                    <div id="rankName">INITIATE_LEARNER</div>
+                    <div id="currentLevel">1</div>
+                    <div style="font-size: 0.6rem; letter-spacing: 2px;">NEURAL_LEVEL</div>
                 </div>
+                
+                <div style="display: flex; justify-content: space-between; font-size: 0.7rem;">
+                    <span>XP_PROGRESS</span>
+                    <span id="xpText">0 / 100</span>
+                </div>
+                <div class="xp-bar-container">
+                    <div id="xpFill"></div>
+                </div>
+                <div style="font-size: 0.6rem; color: #888; text-align: center; margin-top: 5px;">Total XP: <span id="totalXpDisplay">0</span></div>
             </div>
 
-            <div class="workspace">
-                <div class="glass-card">
+            <div class="glass-card">
+                <h3><i class="fas fa-list-ul"></i> SESSION_LOG</h3>
+                <div id="sessionLog">
+                    <div class="log-item" style="color: #666;">Awaiting first link...</div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="workspace">
+            <div class="glass-card">
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('chat', this)"><i class="fas fa-terminal"></i> CORE_LINK</button>
+                    <button class="tab-btn" onclick="switchTab('topics', this)"><i class="fas fa-microchip"></i> MODULES</button>
+                    <button class="tab-btn" onclick="switchTab('homework', this)"><i class="fas fa-file-code"></i> ASSIGNMENTS</button>
+                </div>
+
+                <!-- Chat -->
+                <div id="chat" class="tab-content">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                        <div>
-                            <label>SUBJECT</label>
+                        <div class="input-group">
+                            <label>SUBJECT_DB</label>
                             <select id="subject">
                                 <option value="maths">MATHEMATICS</option>
-                                <option value="science">SCIENCE</option>
-                                <option value="computing">COMPUTING</option>
+                                <option value="science">SCIENCE_CORE</option>
+                                <option value="computing">COMPUTER_SCIENCE</option>
+                                <option value="english">ENGLISH_LIT</option>
                             </select>
                         </div>
-                        <div>
+                        <div class="input-group">
                             <label>TIER</label>
                             <select id="level">
                                 <option value="foundation">FOUNDATION</option>
@@ -99,82 +267,144 @@
                             </select>
                         </div>
                     </div>
-
-                    <label>NEURAL QUERY</label>
-                    <textarea id="question" rows="4" placeholder="Type your question..."></textarea>
-
-                    <button class="btn-execute" onclick="transmitToCore()">EXECUTE LINK</button>
+                    <div class="input-group">
+                        <label>USER_QUERY</label>
+                        <textarea id="question" rows="4" placeholder="Enter query for Neural Core..."></textarea>
+                    </div>
+                    <button class="btn-execute" onclick="executeLink()">EXECUTE NEURAL LINK</button>
                     
-                    <div class="output-box" id="outputBox">
-                        <div style="color: var(--neon-pink); font-size: 0.7rem; margin-bottom: 10px;">> INCOMING STREAM:</div>
-                        <div id="outputText"></div>
+                    <div class="terminal-box" id="responseBox">
+                        <h4 style="color: var(--neon-blue); font-family: 'Orbitron'; font-size: 0.7rem; margin-bottom: 10px;">> DECODED_STREAM:</h4>
+                        <div id="responseText" style="line-height: 1.7; font-family: 'Share Tech Mono';"></div>
                     </div>
                 </div>
+
+                <!-- Topics & Homework can be populated here following the same pattern -->
             </div>
-        </div>
+        </main>
     </div>
 
     <script>
-        // --- THE SANITY CHECKED CONFIG ---
-        // I have removed all quotes and extra logic from this string to make it pure
-        const RAW_URL = 'https://n8n.srv1090894.hstgr.cloud/webhook/tutor';
+        // CONFIG
+        const API_URL = 'https://n8n.srv1090894.hstgr.cloud/webhook/tutor';
+        let state = {
+            xp: 0,
+            level: 1,
+            totalXp: 0,
+            rank: "INITIATE_LEARNER"
+        };
 
-        const STUDENT_ID = 'STU_' + Math.floor(1000 + Math.random() * 9000);
+        // Initialize state from LocalStorage
+        if(localStorage.getItem('tutor_state')) {
+            state = JSON.parse(localStorage.getItem('tutor_state'));
+            updateHUD();
+        }
 
-        async function transmitToCore() {
-            const questionEl = document.getElementById('question');
-            const questionVal = questionEl.value.trim();
-            if (!questionVal) return;
+        function switchTab(id, btn) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            // Add tab content visibility logic here
+        }
 
-            // 1. URL SANITY CHECK
-            // We manually clean the URL string of any weird characters
-            let cleanURL = RAW_URL.replace(/[^\x21-\x7E]/g, "").trim();
-            
-            // Check if it's a valid pattern
-            if (!cleanURL.startsWith('http')) {
-                alert("CONFIG ERROR: URL must start with http. Current value: " + cleanURL);
-                return;
-            }
+        async function executeLink() {
+            const question = document.getElementById('question').value;
+            if(!question) return;
+
+            // Reset Output
+            const responseBox = document.getElementById('responseBox');
+            const responseText = document.getElementById('responseText');
+            responseBox.style.display = 'block';
+            responseText.innerHTML = "ESTABLISHING LINK...";
 
             try {
                 const payload = {
                     action: 'chat',
-                    studentId: STUDENT_ID,
-                    data: {
-                        question: questionVal,
-                        subject: document.getElementById('subject').value,
-                        level: document.getElementById('level').value
-                    }
+                    studentId: 'STU_PERSISTENT',
+                    data: { question, subject: document.getElementById('subject').value }
                 };
 
-                // 2. SAFE STRING BUILDING
-                const jsonStr = JSON.stringify(payload);
-                const encodedData = encodeURIComponent(jsonStr);
-                const finalLink = cleanURL + "?data=" + encodedData;
-
-                console.log("Connecting to:", finalLink);
-
-                const response = await fetch(finalLink, { method: 'GET', mode: 'cors' });
-
-                if (!response.ok) throw new Error("Server Error: " + response.status);
-
+                const finalURL = `${API_URL}?data=${encodeURIComponent(JSON.stringify(payload))}`;
+                const response = await fetch(finalURL);
                 const data = await response.json();
 
-                // 3. UI UPDATE
-                document.getElementById('outputBox').style.display = 'block';
-                document.getElementById('outputText').innerHTML = data.answer || data.response || "No data.";
+                const answer = data.text || data.response || data.answer;
                 
-                if (data.agentic_insights) {
-                    document.getElementById('sessionCount').innerText = data.agentic_insights.sessions || 0;
-                    document.getElementById('topStrength').innerText = (data.agentic_insights.focus_area || "General").toUpperCase();
-                }
-
-                if (window.MathJax) MathJax.typesetPromise();
-
-            } catch (err) {
-                console.error("Link Failure:", err);
-                alert("LINK FAILURE: " + err.message);
+                // Immersion: Typing effect
+                typeEffect(responseText, answer);
+                
+                // Add XP
+                addXP(10, `QUERY_SUCCESS: ${document.getElementById('subject').value}`);
+                
+            } catch (e) {
+                responseText.innerHTML = "CORE_LINK_ERROR: Retrying...";
             }
+        }
+
+        function typeEffect(element, text) {
+            element.innerHTML = "";
+            let i = 0;
+            const timer = setInterval(() => {
+                if (i < text.length) {
+                    element.innerHTML += text.charAt(i);
+                    i++;
+                } else {
+                    clearInterval(timer);
+                    if (window.MathJax) MathJax.typesetPromise();
+                }
+            }, 15);
+        }
+
+        function addXP(amount, message) {
+            state.xp += amount;
+            state.totalXp += amount;
+            
+            const threshold = state.level * 100;
+            if(state.xp >= threshold) {
+                state.level++;
+                state.xp = state.xp - threshold;
+                triggerLevelUp();
+            }
+            
+            updateRank();
+            updateHUD();
+            logActivity(message);
+            saveState();
+        }
+
+        function updateRank() {
+            const ranks = ["INITIATE", "DATA_DRIFTER", "CYBER_SCHOLAR", "NEURAL_ARCHITECT", "CORE_MASTER"];
+            state.rank = ranks[Math.min(state.level - 1, ranks.length - 1)];
+        }
+
+        function updateHUD() {
+            const threshold = state.level * 100;
+            document.getElementById('currentLevel').innerText = state.level;
+            document.getElementById('xpFill').style.width = (state.xp / threshold * 100) + '%';
+            document.getElementById('xpText').innerText = `${state.xp} / ${threshold}`;
+            document.getElementById('rankName').innerText = state.rank;
+            document.getElementById('totalXpDisplay').innerText = state.totalXp;
+            document.getElementById('queryCount').innerText = state.totalXp / 10; // Simulated count
+        }
+
+        function logActivity(msg) {
+            const log = document.getElementById('sessionLog');
+            const item = document.createElement('div');
+            item.className = 'log-item';
+            item.innerText = `> ${msg}`;
+            log.prepend(item);
+        }
+
+        function triggerLevelUp() {
+            document.getElementById('newLevelNum').innerText = state.level;
+            document.getElementById('levelUpOverlay').style.display = 'flex';
+        }
+
+        function closeLevelUp() {
+            document.getElementById('levelUpOverlay').style.display = 'none';
+        }
+
+        function saveState() {
+            localStorage.setItem('tutor_state', JSON.stringify(state));
         }
     </script>
 </body>
