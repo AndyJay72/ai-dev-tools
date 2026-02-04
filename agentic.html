@@ -1,53 +1,77 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEURAL ARCHITECT | GCSE Learning OS</title>
-    
-    <!-- Base64 Futuristic Favicon (Neon Brain) -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>">
-    
+    <title>VIRTUAL TUTOR | GCSE Neural Core</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>🎓</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <script>
-        MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }, svg: { fontCache: 'global' } };
-    </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-
     <style>
         :root {
+            /* Dark Theme (Default) */
             --neon-pink: #f72585;
-            --pink-glow: rgba(247, 37, 133, 0.6);
-            --neon-purple: #7209b7;
             --neon-blue: #4895ef;
-            --neon-green: #4ade80;
-            --bg-dark: #080110;
-            --glass: rgba(255, 255, 255, 0.05);
+            --neon-purple: #7209b7;
+            --neon-green: #00f5d4;
+            --neon-orange: #ff9f1c;
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --card-bg: rgba(255, 255, 255, 0.04);
             --glass-border: rgba(255, 255, 255, 0.1);
+            --text-primary: #e0e0e0;
+            --text-secondary: #888;
+            --text-muted: #555;
+            --input-bg: rgba(0, 0, 0, 0.4);
+            --pink-glow: 0 0 15px rgba(247, 37, 133, 0.4);
+            --blue-glow: 0 0 15px rgba(72, 149, 239, 0.4);
+            --green-glow: 0 0 15px rgba(0, 245, 212, 0.4);
+            --scanline-opacity: 0.03;
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #f5f7fa;
+            --bg-secondary: #ffffff;
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --glass-border: rgba(0, 0, 0, 0.1);
+            --text-primary: #1a1a2e;
+            --text-secondary: #555;
+            --text-muted: #888;
+            --input-bg: rgba(255, 255, 255, 0.9);
+            --pink-glow: 0 0 20px rgba(247, 37, 133, 0.2);
+            --blue-glow: 0 0 20px rgba(72, 149, 239, 0.2);
+            --green-glow: 0 0 20px rgba(0, 245, 212, 0.2);
+            --scanline-opacity: 0;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
+
         body {
-            background-color: var(--bg-dark);
+            background-color: var(--bg-primary);
             background-image: 
-                radial-gradient(circle at 15% 15%, rgba(114, 9, 183, 0.2) 0%, transparent 45%),
-                radial-gradient(circle at 85% 85%, rgba(247, 37, 133, 0.2) 0%, transparent 45%);
-            color: #f0f0f0;
+                radial-gradient(circle at 20% 20%, rgba(114, 9, 183, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(247, 37, 133, 0.1) 0%, transparent 40%);
+            color: var(--text-primary);
             font-family: 'Rajdhani', sans-serif;
             min-height: 100vh;
             overflow-x: hidden;
-            padding: 15px;
+            padding: 10px;
+            transition: background-color 0.3s, color 0.3s;
         }
 
-        /* CRT Overlay Effect */
-        body::after {
-            content: " ";
+        [data-theme="light"] body {
+            background-image: 
+                radial-gradient(circle at 20% 20%, rgba(114, 9, 183, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(247, 37, 133, 0.05) 0%, transparent 40%);
+        }
+
+        body::before {
+            content: "";
             position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.03) 0px, rgba(0,0,0,0.03) 1px, transparent 1px, transparent 2px);
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: repeating-linear-gradient(0deg, rgba(0,0,0,var(--scanline-opacity)) 0px, rgba(0,0,0,var(--scanline-opacity)) 1px, transparent 1px, transparent 2px);
             pointer-events: none;
             z-index: 1000;
         }
@@ -58,379 +82,1495 @@
             margin: 0 auto;
             display: grid;
             grid-template-columns: 1fr;
-            gap: 25px;
+            gap: 20px;
         }
 
         @media (min-width: 1024px) {
-            .container { grid-template-columns: 360px 1fr; }
+            .container {
+                grid-template-columns: 320px 1fr;
+                padding: 30px;
+            }
         }
 
+        /* Header */
         header {
             grid-column: 1 / -1;
-            background: var(--glass);
-            backdrop-filter: blur(20px);
+            background: var(--card-bg);
+            backdrop-filter: blur(15px);
             border: 1px solid var(--glass-border);
-            border-radius: 25px;
-            padding: 35px;
-            text-align: center;
-            border-bottom: 3px solid var(--neon-pink);
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5), var(--pink-glow);
-            position: relative;
-            overflow: hidden;
-        }
-
-        header i.header-icon {
-            position: absolute;
-            right: 5%;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 4rem;
-            color: var(--neon-pink);
-            opacity: 0.1;
+            border-left: 4px solid var(--neon-pink);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            box-shadow: var(--pink-glow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            transition: background 0.3s, border-color 0.3s;
         }
 
         h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: clamp(1.6rem, 6vw, 3rem);
-            background: linear-gradient(90deg, #fff, var(--neon-pink), var(--neon-blue));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: 6px;
-            text-transform: uppercase;
-        }
-
-        .subtitle {
-            color: var(--neon-blue);
-            font-size: 0.8rem;
+            font-family: 'Orbitron';
+            font-size: clamp(1.4rem, 5vw, 2.4rem);
             letter-spacing: 4px;
-            margin-top: 10px;
             text-transform: uppercase;
-            font-weight: 700;
+            color: var(--text-primary);
+            text-shadow: 0 0 10px var(--neon-pink);
         }
 
-        /* Sidebar HUD */
-        .sidebar { display: flex; flex-direction: column; gap: 20px; }
+        [data-theme="light"] h1 {
+            text-shadow: none;
+        }
 
-        .glass-card {
-            background: var(--glass);
-            backdrop-filter: blur(30px);
-            border-radius: 24px;
-            padding: 30px;
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 15px;
+            font-family: 'Share Tech Mono';
+            font-size: 0.75rem;
+        }
+
+        .stat-chip {
+            background: var(--input-bg);
+            padding: 8px 15px;
+            border-radius: 20px;
             border: 1px solid var(--glass-border);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
-            position: relative;
+            transition: background 0.3s;
         }
 
-        /* XP & Level HUD */
-        .rank-hud {
-            text-align: center;
-            padding-bottom: 20px;
-            margin-bottom: 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-        #rankName { color: var(--neon-blue); font-weight: 700; letter-spacing: 2px; font-size: 0.85rem; }
-        #currentLevel { font-family: 'Orbitron'; font-size: 3rem; color: #fff; text-shadow: var(--pink-glow); line-height: 1; margin: 10px 0; }
+        .stat-chip span { color: var(--neon-green); }
 
-        .xp-track {
-            background: rgba(0,0,0,0.3);
-            height: 14px;
-            border-radius: 7px;
-            overflow: hidden;
-            margin: 12px 0;
+        /* Theme Toggle */
+        .theme-toggle {
+            background: var(--input-bg);
             border: 1px solid var(--glass-border);
-        }
-        #xpFill {
-            height: 100%; width: 0%;
-            background: linear-gradient(90deg, var(--neon-purple), var(--neon-pink));
-            box-shadow: 0 0 15px var(--neon-pink);
-            transition: width 0.6s ease-in-out;
-        }
-
-        h3 { font-family: 'Orbitron'; font-size: 0.8rem; color: var(--neon-blue); margin-bottom: 15px; letter-spacing: 2px; text-transform: uppercase; }
-
-        /* Workspace Controls */
-        .workspace-tabs { display: flex; gap: 12px; margin-bottom: 30px; overflow-x: auto; padding: 5px; }
-        .tab {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid var(--neon-purple);
-            color: #fff;
-            padding: 12px 25px;
-            border-radius: 12px;
+            border-radius: 25px;
+            padding: 8px 16px;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Orbitron';
+            font-size: 0.6rem;
+            color: var(--text-primary);
+            transition: all 0.3s;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--neon-blue);
+            box-shadow: var(--blue-glow);
+        }
+
+        .theme-toggle i {
+            font-size: 1rem;
+            color: var(--neon-orange);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn-nav {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 18px;
             font-family: 'Orbitron';
             font-size: 0.7rem;
-            transition: 0.3s;
-            white-space: nowrap;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-radius: 8px;
+            letter-spacing: 1px;
         }
-        .tab.active { background: var(--neon-purple); border-color: var(--neon-blue); box-shadow: 0 0 20px var(--neon-purple); }
 
-        .form-group { margin-bottom: 25px; }
-        label { display: block; font-size: 0.8rem; color: var(--neon-pink); margin-bottom: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
-        
-        select, textarea, input {
-            width: 100%;
-            background: rgba(0,0,0,0.5);
+        .btn-nav i {
+            color: var(--neon-blue);
+            font-size: 1rem;
+            width: 20px;
+        }
+
+        .btn-nav:hover, .btn-nav.active {
+            border-color: var(--neon-pink);
+            background: rgba(247, 37, 133, 0.1);
+            box-shadow: var(--pink-glow);
+            transform: translateX(5px);
+        }
+
+        .btn-nav.active i { color: var(--neon-pink); }
+
+        @media (max-width: 1024px) {
+            .sidebar {
+                flex-direction: row;
+                overflow-x: auto;
+                padding-bottom: 10px;
+            }
+            .btn-nav {
+                min-width: 140px;
+                flex-shrink: 0;
+            }
+        }
+
+        /* Student HUD Card */
+        .hud-card {
+            background: var(--card-bg);
             border: 1px solid var(--glass-border);
-            border-radius: 14px;
-            padding: 15px;
-            color: #fff;
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 1.1rem;
-            transition: 0.3s;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            transition: background 0.3s;
         }
-        textarea:focus, select:focus { outline: none; border-color: var(--neon-pink); background: rgba(0,0,0,0.7); }
 
-        .btn-neural {
+        .hud-header {
+            font-family: 'Orbitron';
+            font-size: 0.6rem;
+            color: var(--neon-blue);
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+
+        .xp-display {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .xp-val {
+            font-family: 'Orbitron';
+            font-size: 2.2rem;
+            color: var(--neon-pink);
+            text-shadow: var(--pink-glow);
+        }
+
+        [data-theme="light"] .xp-val {
+            text-shadow: none;
+        }
+
+        .xp-label {
+            font-size: 0.6rem;
+            letter-spacing: 2px;
+            color: var(--neon-blue);
+            margin-top: 5px;
+        }
+
+        .rank-badge {
+            display: inline-block;
+            background: linear-gradient(90deg, var(--neon-purple), var(--neon-pink));
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-family: 'Orbitron';
+            font-size: 0.65rem;
+            letter-spacing: 1px;
+            margin-top: 10px;
+            color: #fff;
+        }
+
+        .xp-bar-container {
+            background: var(--input-bg);
+            border-radius: 10px;
+            height: 8px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+
+        .xp-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-pink));
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .rank-progress {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.55rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+            font-family: 'Share Tech Mono';
+        }
+
+        .sessions-count {
+            text-align: center;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .sessions-val {
+            font-family: 'Orbitron';
+            font-size: 1.4rem;
+            color: var(--neon-green);
+        }
+
+        /* Main Workspace */
+        .main-workspace {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 30px;
+            min-height: 650px;
+            position: relative;
+            transition: background 0.3s;
+        }
+
+        .main-workspace::before {
+            content: "";
+            position: absolute;
+            top: 0; right: 0;
+            width: 60px; height: 60px;
+            background: linear-gradient(225deg, var(--neon-pink) 0%, transparent 50%);
+            opacity: 0.2;
+            pointer-events: none;
+        }
+
+        /* Controls */
+        .control-group { margin-bottom: 25px; }
+
+        .control-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .control-row { grid-template-columns: 1fr; }
+        }
+
+        label {
+            display: block;
+            font-family: 'Orbitron';
+            font-size: 0.65rem;
+            color: var(--neon-blue);
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        select, textarea, input[type="text"], input[type="number"] {
             width: 100%;
-            background: linear-gradient(135deg, var(--neon-purple), var(--neon-pink));
+            background: var(--input-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 15px;
+            font-family: 'Share Tech Mono';
+            font-size: 1rem;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.3s, background 0.3s;
+        }
+
+        select:focus, textarea:focus, input:focus {
+            border-color: var(--neon-pink);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .btn-primary {
+            width: 100%;
+            background: linear-gradient(90deg, var(--neon-purple), var(--neon-pink));
             border: none;
             color: #fff;
-            padding: 20px;
-            border-radius: 15px;
+            padding: 18px;
             font-family: 'Orbitron';
             font-weight: 700;
-            cursor: pointer;
             text-transform: uppercase;
-            letter-spacing: 3px;
-            box-shadow: 0 5px 25px rgba(247, 37, 133, 0.4);
+            cursor: pointer;
             transition: 0.3s;
+            letter-spacing: 2px;
+            border-radius: 8px;
+            box-shadow: var(--pink-glow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
-        .btn-neural:hover { transform: scale(1.02); filter: brightness(1.2); }
 
-        /* Decoded Response Box */
-        .response-terminal {
-            background: rgba(0,0,0,0.6);
-            border-radius: 20px;
-            padding: 30px;
+        .btn-primary:hover:not(:disabled) {
+            filter: brightness(1.2);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--neon-blue);
+            color: var(--neon-blue);
+            padding: 12px 20px;
+            font-family: 'Orbitron';
+            font-size: 0.7rem;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: 0.3s;
+            letter-spacing: 1px;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(72, 149, 239, 0.1);
+            box-shadow: var(--blue-glow);
+        }
+
+        .btn-primary .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid transparent;
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Terminal Output */
+        .terminal-display {
+            background: var(--input-bg);
+            border: 1px solid var(--glass-border);
+            border-left: 4px solid var(--neon-blue);
+            padding: 25px;
             margin-top: 30px;
-            border-left: 5px solid var(--neon-pink);
+            font-family: 'Share Tech Mono';
+            line-height: 1.8;
+            color: var(--text-primary);
+            border-radius: 8px;
             display: none;
-            position: relative;
+            max-height: 500px;
+            overflow-y: auto;
+            transition: background 0.3s;
         }
-        .response-terminal::before { content: "DATA_STREAM"; position: absolute; top: -10px; right: 20px; font-size: 0.6rem; color: var(--neon-pink); background: var(--bg-dark); padding: 0 10px; border: 1px solid var(--neon-pink); }
 
-        /* Activity Items */
-        .activity-log { font-size: 0.8rem; padding: 10px; color: var(--neon-green); font-family: 'Share Tech Mono'; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .terminal-display.visible { display: block; }
+        .terminal-display.error { border-left-color: var(--neon-pink); }
+        .terminal-display.success { border-left-color: var(--neon-green); }
 
-        /* Level Up Modal */
-        #levelUp {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(15px);
-            z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center;
+        .response-meta {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
         }
-        .lvl-banner { font-family: 'Orbitron'; font-size: 4rem; color: var(--neon-pink); text-shadow: 0 0 20px var(--neon-pink); }
 
+        /* Quiz Styles */
+        .quiz-container {
+            margin-top: 20px;
+        }
+
+        .quiz-question {
+            background: var(--input-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            transition: background 0.3s;
+        }
+
+        .quiz-question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .quiz-question-number {
+            font-family: 'Orbitron';
+            font-size: 0.7rem;
+            color: var(--neon-pink);
+            letter-spacing: 2px;
+        }
+
+        .quiz-question-points {
+            background: var(--neon-purple);
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 10px;
+            font-size: 0.65rem;
+            font-family: 'Orbitron';
+        }
+
+        .quiz-question-text {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .quiz-option {
+            background: var(--card-bg);
+            border: 2px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .quiz-option:hover:not(.disabled) {
+            border-color: var(--neon-blue);
+            background: rgba(72, 149, 239, 0.1);
+        }
+
+        .quiz-option.selected {
+            border-color: var(--neon-pink);
+            background: rgba(247, 37, 133, 0.15);
+        }
+
+        .quiz-option.correct {
+            border-color: var(--neon-green);
+            background: rgba(0, 245, 212, 0.15);
+        }
+
+        .quiz-option.incorrect {
+            border-color: var(--neon-pink);
+            background: rgba(247, 37, 133, 0.15);
+        }
+
+        .quiz-option.disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .quiz-option-letter {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron';
+            font-size: 0.7rem;
+            flex-shrink: 0;
+        }
+
+        .quiz-option.selected .quiz-option-letter,
+        .quiz-option.correct .quiz-option-letter {
+            background: var(--neon-green);
+            color: #000;
+        }
+
+        .quiz-option.incorrect .quiz-option-letter {
+            background: var(--neon-pink);
+            color: #fff;
+        }
+
+        .quiz-explanation {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(72, 149, 239, 0.1);
+            border-left: 3px solid var(--neon-blue);
+            border-radius: 0 8px 8px 0;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .quiz-explanation.visible { display: block; }
+
+        .quiz-results {
+            background: var(--card-bg);
+            border: 2px solid var(--neon-green);
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .quiz-score {
+            font-family: 'Orbitron';
+            font-size: 3rem;
+            color: var(--neon-green);
+            text-shadow: var(--green-glow);
+        }
+
+        [data-theme="light"] .quiz-score {
+            text-shadow: none;
+        }
+
+        .quiz-score-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+            letter-spacing: 2px;
+        }
+
+        .quiz-progress {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .quiz-progress-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--glass-border);
+            transition: all 0.3s;
+        }
+
+        .quiz-progress-dot.current {
+            background: var(--neon-blue);
+            box-shadow: var(--blue-glow);
+        }
+
+        .quiz-progress-dot.correct { background: var(--neon-green); }
+        .quiz-progress-dot.incorrect { background: var(--neon-pink); }
+
+        /* Mastery Grid */
+        .mastery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .mastery-node {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            padding: 20px;
+            text-align: center;
+            border-radius: 12px;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+
+        .mastery-node:hover {
+            border-color: var(--neon-blue);
+            background: rgba(72, 149, 239, 0.05);
+            transform: translateY(-3px);
+        }
+
+        .mastery-node.selected {
+            border-color: var(--neon-pink);
+            background: rgba(247, 37, 133, 0.1);
+        }
+
+        .mastery-icon {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .mastery-name {
+            font-family: 'Orbitron';
+            font-size: 0.65rem;
+            color: var(--neon-blue);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* History Section */
+        .history-item {
+            background: var(--input-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            transition: background 0.3s;
+        }
+
+        .history-question {
+            color: var(--neon-pink);
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .history-answer {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .history-meta {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            margin-top: 10px;
+            font-family: 'Share Tech Mono';
+        }
+
+        /* View Sections */
+        .view-section {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .view-section.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Status indicator */
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.online { background: var(--neon-green); }
+        .status-dot.offline { background: var(--neon-pink); animation: none; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Difficulty selector */
+        .difficulty-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .difficulty-btn {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid var(--glass-border);
+            background: var(--card-bg);
+            color: var(--text-primary);
+            font-family: 'Orbitron';
+            font-size: 0.65rem;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .difficulty-btn:hover {
+            border-color: var(--neon-blue);
+        }
+
+        .difficulty-btn.active {
+            border-color: var(--neon-pink);
+            background: rgba(247, 37, 133, 0.1);
+        }
+
+        .difficulty-btn.easy { border-top: 3px solid var(--neon-green); }
+        .difficulty-btn.medium { border-top: 3px solid var(--neon-orange); }
+        .difficulty-btn.hard { border-top: 3px solid var(--neon-pink); }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        ::-webkit-scrollbar-thumb { background: var(--neon-purple); border-radius: 3px; }
     </style>
 </head>
 <body>
-
-    <div id="levelUp">
-        <div class="lvl-banner">NEURAL UPGRADE</div>
-        <div style="font-family: 'Orbitron'; margin: 20px 0;">RANK: <span id="newRank">ARCHITECT</span></div>
-        <button onclick="document.getElementById('levelUp').style.display='none'" class="btn-neural" style="width: auto; padding: 15px 40px;">RESUME CORE</button>
-    </div>
-
     <div class="container">
         <header>
-            <i class="fas fa-microchip header-icon"></i>
-            <h1>Neural Architect</h1>
-            <p class="subtitle">System Status: Learning OS v3.6 • Postgres Core Active</p>
+            <div>
+                <h1>VIRTUAL TUTOR</h1>
+                <p style="color: var(--neon-blue); font-size: 0.7rem; letter-spacing: 3px; margin-top: 8px;">
+                    <span class="status-dot online" id="statusDot"></span>
+                    GCSE NEURAL CORE v2.1 // DB_SECURED
+                </p>
+            </div>
+            <div class="header-controls">
+                <div class="header-stats">
+                    <div class="stat-chip">ID: <span id="studentIdDisplay">---</span></div>
+                    <div class="stat-chip">STATUS: <span id="connectionStatus">ONLINE</span></div>
+                </div>
+                <button class="theme-toggle" onclick="toggleTheme()">
+                    <i class="fas fa-sun" id="themeIcon"></i>
+                    <span id="themeLabel">LIGHT</span>
+                </button>
+            </div>
         </header>
 
         <!-- Sidebar -->
         <aside class="sidebar">
-            <div class="glass-card">
-                <div class="rank-hud">
-                    <div id="rankName">INITIATE LEARNER</div>
-                    <div id="currentLevel">1</div>
-                    <div style="font-size: 0.6rem; letter-spacing: 3px; font-weight: 700; color: var(--neon-blue);">NEURAL LEVEL</div>
-                </div>
-                
-                <div style="display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 700;">
-                    <span>XP PROGRESS</span>
-                    <span id="xpText">0 / 100</span>
-                </div>
-                <div class="xp-track">
-                    <div id="xpFill"></div>
-                </div>
-                <div style="font-size: 0.65rem; color: #888; text-align: center;">Total Points: <span id="totalXp">0</span> | Links: <span id="linkCount">0</span></div>
-            </div>
+            <button class="btn-nav active" onclick="setView('tutor', this)">
+                <i class="fas fa-brain"></i> ASK TUTOR
+            </button>
+            <button class="btn-nav" onclick="setView('quiz', this)">
+                <i class="fas fa-clipboard-question"></i> QUIZ MODE
+            </button>
+            <button class="btn-nav" onclick="setView('subjects', this)">
+                <i class="fas fa-atom"></i> SUBJECTS
+            </button>
+            <button class="btn-nav" onclick="setView('history', this)">
+                <i class="fas fa-clock-rotate-left"></i> HISTORY
+            </button>
+            <button class="btn-nav" onclick="setView('settings', this)">
+                <i class="fas fa-gear"></i> SETTINGS
+            </button>
 
-            <div class="glass-card">
-                <h3><i class="fas fa-satellite-dish"></i> Interaction Logs</h3>
-                <div id="sessionLogs" style="max-height: 200px; overflow-y: auto;">
-                    <div class="activity-log" style="color: #555;">Waiting for neural link...</div>
+            <!-- Student HUD -->
+            <div class="hud-card">
+                <div class="hud-header">Student Profile</div>
+                <div class="xp-display">
+                    <div class="xp-val" id="xpDisplay">0</div>
+                    <div class="xp-label">EXPERIENCE POINTS</div>
+                    <div class="rank-badge" id="rankBadge">INITIATE</div>
+                </div>
+                <div class="xp-bar-container">
+                    <div class="xp-bar" id="xpBar" style="width: 0%"></div>
+                </div>
+                <div class="rank-progress">
+                    <span id="currentRankLabel">Initiate</span>
+                    <span id="nextRankLabel">→ Learner (100 XP)</span>
+                </div>
+                <div class="sessions-count">
+                    <div class="sessions-val" id="sessionsDisplay">0</div>
+                    <div class="xp-label">TOTAL SESSIONS</div>
                 </div>
             </div>
         </aside>
 
-        <!-- Main workspace -->
-        <main class="workspace">
-            <div class="glass-card" style="min-height: 600px;">
-                <div class="workspace-tabs">
-                    <button class="tab active"><i class="fas fa-terminal"></i> Core Terminal</button>
-                    <button class="tab"><i class="fas fa-folder-open"></i> Subject Modules</button>
-                    <button class="tab"><i class="fas fa-file-invoice"></i> Assignments</button>
+        <!-- Main Workspace -->
+        <main class="main-workspace">
+            <!-- Tab: Ask Tutor -->
+            <section id="view-tutor" class="view-section active">
+                <div class="control-group">
+                    <label>Subject Module</label>
+                    <select id="subject">
+                        <option value="Maths">📐 Mathematics</option>
+                        <option value="English">📚 English Literature</option>
+                        <option value="Science">🔬 Combined Science</option>
+                        <option value="Biology">🧬 Biology</option>
+                        <option value="Chemistry">⚗️ Chemistry</option>
+                        <option value="Physics">⚛️ Physics</option>
+                        <option value="History">🏛️ History</option>
+                        <option value="Geography">🌍 Geography</option>
+                        <option value="Computer Science">💻 Computer Science</option>
+                        <option value="General">📋 General</option>
+                    </select>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    <div class="form-group">
-                        <label><i class="fas fa-database"></i> Subject Database</label>
-                        <select id="subject">
-                            <option value="maths">Mathematics</option>
-                            <option value="science">Science Core</option>
-                            <option value="computing">Computer Science</option>
-                            <option value="english">English Literature</option>
-                            <option value="geography">Geography</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label><i class="fas fa-signal"></i> Academic Tier</label>
-                        <select id="level">
-                            <option value="foundation">Foundation Tier</option>
-                            <option value="higher">Higher Tier</option>
-                        </select>
-                    </div>
+                <div class="control-group">
+                    <label>Your Question</label>
+                    <textarea id="question" rows="5" placeholder="Type your GCSE question here... e.g., 'Explain the process of osmosis' or 'How do I solve quadratic equations?'"></textarea>
                 </div>
 
-                <div class="form-group">
-                    <label><i class="fas fa-keyboard"></i> Neural Query Input</label>
-                    <textarea id="question" rows="5" placeholder="Transmit query to the Neural Core..."></textarea>
-                </div>
-
-                <button class="btn-neural" onclick="executeNeuralLink()">
-                    <i class="fas fa-bolt"></i> Execute Neural Link
+                <button class="btn-primary" id="submitBtn" onclick="askTutor()">
+                    <i class="fas fa-paper-plane"></i>
+                    <span id="btnText">SUBMIT QUERY</span>
                 </button>
-                
-                <div class="response-terminal" id="responseBox">
-                    <div style="color: var(--neon-blue); font-family: 'Orbitron'; font-size: 0.75rem; margin-bottom: 15px;">
-                        <i class="fas fa-check-double"></i> Link Established - Decoded Response:
+
+                <div id="responseOutput" class="terminal-display"></div>
+            </section>
+
+            <!-- Tab: Quiz Mode -->
+            <section id="view-quiz" class="view-section">
+                <div id="quizSetup">
+                    <label>Quiz Configuration</label>
+                    
+                    <div class="control-group">
+                        <label style="font-size: 0.6rem;">Subject</label>
+                        <select id="quizSubject">
+                            <option value="Maths">📐 Mathematics</option>
+                            <option value="English">📚 English</option>
+                            <option value="Science">🔬 Combined Science</option>
+                            <option value="Biology">🧬 Biology</option>
+                            <option value="Chemistry">⚗️ Chemistry</option>
+                            <option value="Physics">⚛️ Physics</option>
+                            <option value="History">🏛️ History</option>
+                            <option value="Geography">🌍 Geography</option>
+                            <option value="Computer Science">💻 Computer Science</option>
+                        </select>
                     </div>
-                    <div id="responseText" style="line-height: 1.8; font-family: 'Share Tech Mono';"></div>
+
+                    <div class="control-group">
+                        <label style="font-size: 0.6rem;">Topic (Optional)</label>
+                        <input type="text" id="quizTopic" placeholder="e.g., Photosynthesis, World War 2, Algebra...">
+                    </div>
+
+                    <div class="control-group">
+                        <label style="font-size: 0.6rem;">Difficulty</label>
+                        <div class="difficulty-selector">
+                            <button class="difficulty-btn easy active" onclick="setDifficulty('easy', this)">
+                                <i class="fas fa-seedling"></i><br>EASY
+                            </button>
+                            <button class="difficulty-btn medium" onclick="setDifficulty('medium', this)">
+                                <i class="fas fa-fire"></i><br>MEDIUM
+                            </button>
+                            <button class="difficulty-btn hard" onclick="setDifficulty('hard', this)">
+                                <i class="fas fa-skull"></i><br>HARD
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="control-row">
+                        <div class="control-group">
+                            <label style="font-size: 0.6rem;">Number of Questions</label>
+                            <select id="quizCount">
+                                <option value="3">3 Questions</option>
+                                <option value="5" selected>5 Questions</option>
+                                <option value="10">10 Questions</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button class="btn-primary" id="generateQuizBtn" onclick="generateQuiz()">
+                        <i class="fas fa-wand-magic-sparkles"></i>
+                        <span id="quizBtnText">GENERATE QUIZ</span>
+                    </button>
                 </div>
-            </div>
+
+                <div id="quizContainer" class="quiz-container" style="display: none;">
+                    <div class="quiz-progress" id="quizProgress"></div>
+                    <div id="quizQuestions"></div>
+                    <div id="quizResults" class="quiz-results" style="display: none;">
+                        <div class="quiz-score" id="finalScore">0%</div>
+                        <div class="quiz-score-label">FINAL SCORE</div>
+                        <p style="margin: 20px 0; color: var(--text-secondary);" id="scoreMessage"></p>
+                        <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                            <button class="btn-secondary" onclick="resetQuiz()">
+                                <i class="fas fa-rotate"></i> NEW QUIZ
+                            </button>
+                            <button class="btn-primary" style="width: auto; padding: 12px 25px;" onclick="retryQuiz()">
+                                <i class="fas fa-redo"></i> RETRY
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="quizOutput" class="terminal-display"></div>
+            </section>
+
+            <!-- Tab: Subjects -->
+            <section id="view-subjects" class="view-section">
+                <label>Select a Subject to Focus On</label>
+                <div class="mastery-grid" id="subjectGrid"></div>
+                <div id="subjectInfo" class="terminal-display" style="margin-top: 20px;"></div>
+            </section>
+
+            <!-- Tab: History -->
+            <section id="view-history" class="view-section">
+                <label>Recent Sessions</label>
+                <div id="historyList">
+                    <p style="color: var(--text-muted); font-style: italic;">No history yet. Start asking questions!</p>
+                </div>
+            </section>
+
+            <!-- Tab: Settings -->
+            <section id="view-settings" class="view-section">
+                <label>API Configuration</label>
+                <div class="control-group">
+                    <label style="font-size: 0.6rem;">Webhook URL</label>
+                    <input type="text" id="apiUrl" value="https://n8n.srv1090894.hstgr.cloud/webhook/tutor" placeholder="Your n8n webhook URL">
+                </div>
+                <div class="control-group">
+                    <label style="font-size: 0.6rem;">Student ID</label>
+                    <input type="text" id="customStudentId" placeholder="Leave blank for auto-generated ID">
+                </div>
+                <button class="btn-primary" onclick="saveSettings()">
+                    <i class="fas fa-save"></i> SAVE CONFIGURATION
+                </button>
+                <div class="terminal-display visible" style="margin-top: 20px; border-left-color: var(--neon-purple);">
+                    <strong style="color: var(--neon-blue);">System Info</strong><br><br>
+                    • Workflow: Virtual Tutor Core - DB Edition (Secured)<br>
+                    • Model: GPT-4o Mini<br>
+                    • Database: PostgreSQL (student tracking enabled)<br>
+                    • XP System: +10 XP per query, +20 XP per quiz question<br>
+                    • Ranks: Initiate → Learner (100) → Apprentice (500) → Scholar (1000)
+                </div>
+            </section>
         </main>
     </div>
 
     <script>
-        // --- SECURE CONFIGURATION ---
-        const API_URL = 'https://n8n.srv1090894.hstgr.cloud/webhook/tutor';
-        const STUDENT_ID = 'ARCHITECT_' + Math.floor(1000 + Math.random() * 9000);
-
-        let state = JSON.parse(localStorage.getItem('neural_os_state')) || {
-            xp: 0, level: 1, totalXp: 0, links: 0, rank: "INITIATE LEARNER"
+        // Configuration
+        const CONFIG = {
+            apiUrl: localStorage.getItem('tutor_api_url') || 'https://n8n.srv1090894.hstgr.cloud/webhook/tutor',
+            studentId: localStorage.getItem('tutor_student_id') || generateStudentId()
         };
 
-        // Initialize HUD
-        updateHUD();
+        // State
+        const state = {
+            xp: parseInt(localStorage.getItem('tutor_xp')) || 0,
+            sessions: parseInt(localStorage.getItem('tutor_sessions')) || 0,
+            history: JSON.parse(localStorage.getItem('tutor_history')) || [],
+            theme: localStorage.getItem('tutor_theme') || 'dark',
+            quiz: {
+                questions: [],
+                currentIndex: 0,
+                answers: [],
+                difficulty: 'easy',
+                subject: 'Maths',
+                topic: ''
+            }
+        };
 
-        async function executeNeuralLink() {
-            const question = document.getElementById('question').value.trim();
-            if(!question) return;
+        // Subject definitions
+        const SUBJECTS = [
+            { id: 'Maths', name: 'Mathematics', icon: '📐', desc: 'Algebra, geometry, statistics, and problem-solving' },
+            { id: 'English', name: 'English', icon: '📚', desc: 'Literature analysis, creative writing, and language' },
+            { id: 'Science', name: 'Combined Science', icon: '🔬', desc: 'Biology, Chemistry, and Physics combined' },
+            { id: 'Biology', name: 'Biology', icon: '🧬', desc: 'Cell biology, genetics, ecology, and human body' },
+            { id: 'Chemistry', name: 'Chemistry', icon: '⚗️', desc: 'Atoms, reactions, organic chemistry, and calculations' },
+            { id: 'Physics', name: 'Physics', icon: '⚛️', desc: 'Forces, energy, waves, electricity, and space' },
+            { id: 'History', name: 'History', icon: '🏛️', desc: 'Historical events, source analysis, and interpretations' },
+            { id: 'Geography', name: 'Geography', icon: '🌍', desc: 'Physical and human geography, fieldwork skills' },
+            { id: 'Computer Science', name: 'Comp Sci', icon: '💻', desc: 'Programming, algorithms, and computer systems' },
+            { id: 'General', name: 'General', icon: '📋', desc: 'Cross-curricular and study skills' }
+        ];
 
-            const responseBox = document.getElementById('responseBox');
-            const responseText = document.getElementById('responseText');
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('studentIdDisplay').textContent = CONFIG.studentId.slice(0, 12);
+            document.getElementById('apiUrl').value = CONFIG.apiUrl;
+            document.getElementById('customStudentId').value = CONFIG.studentId;
+            applyTheme(state.theme);
+            updateXPDisplay();
+            renderSubjectGrid();
+            renderHistory();
+        });
+
+        // Theme functions
+        function toggleTheme() {
+            state.theme = state.theme === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('tutor_theme', state.theme);
+            applyTheme(state.theme);
+        }
+
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            const icon = document.getElementById('themeIcon');
+            const label = document.getElementById('themeLabel');
+            if (theme === 'dark') {
+                icon.className = 'fas fa-sun';
+                label.textContent = 'LIGHT';
+            } else {
+                icon.className = 'fas fa-moon';
+                label.textContent = 'DARK';
+            }
+        }
+
+        function generateStudentId() {
+            const id = 'STU_' + Math.random().toString(36).substring(2, 10).toUpperCase();
+            localStorage.setItem('tutor_student_id', id);
+            return id;
+        }
+
+        function setView(viewId, btn) {
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.btn-nav').forEach(b => b.classList.remove('active'));
+            document.getElementById('view-' + viewId).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        function getRank(xp) {
+            if (xp >= 1000) return { name: 'SCHOLAR', next: null, threshold: 1000 };
+            if (xp >= 500) return { name: 'APPRENTICE', next: 'Scholar', threshold: 1000 };
+            if (xp >= 100) return { name: 'LEARNER', next: 'Apprentice', threshold: 500 };
+            return { name: 'INITIATE', next: 'Learner', threshold: 100 };
+        }
+
+        function updateXPDisplay() {
+            const rank = getRank(state.xp);
+            document.getElementById('xpDisplay').textContent = state.xp;
+            document.getElementById('rankBadge').textContent = rank.name;
+            document.getElementById('sessionsDisplay').textContent = state.sessions;
+            document.getElementById('currentRankLabel').textContent = rank.name.charAt(0) + rank.name.slice(1).toLowerCase();
             
-            responseBox.style.display = 'block';
-            responseText.innerHTML = "<span style='color:var(--neon-blue)'>[STATUS] INITIATING LINK... VERIFYING POSTGRES SYNC...</span>";
+            if (rank.next) {
+                document.getElementById('nextRankLabel').textContent = `→ ${rank.next} (${rank.threshold} XP)`;
+                const prevThreshold = rank.threshold === 100 ? 0 : (rank.threshold === 500 ? 100 : 500);
+                const progress = ((state.xp - prevThreshold) / (rank.threshold - prevThreshold)) * 100;
+                document.getElementById('xpBar').style.width = Math.min(progress, 100) + '%';
+            } else {
+                document.getElementById('nextRankLabel').textContent = '★ MAX RANK';
+                document.getElementById('xpBar').style.width = '100%';
+            }
+        }
+
+        function renderSubjectGrid() {
+            const grid = document.getElementById('subjectGrid');
+            grid.innerHTML = SUBJECTS.map(s => `
+                <div class="mastery-node" onclick="selectSubject('${s.id}', this)" data-subject="${s.id}">
+                    <div class="mastery-icon">${s.icon}</div>
+                    <div class="mastery-name">${s.name}</div>
+                </div>
+            `).join('');
+        }
+
+        function selectSubject(subjectId, el) {
+            document.querySelectorAll('.mastery-node').forEach(n => n.classList.remove('selected'));
+            el.classList.add('selected');
+            
+            const subject = SUBJECTS.find(s => s.id === subjectId);
+            const info = document.getElementById('subjectInfo');
+            info.classList.add('visible');
+            info.innerHTML = `
+                <div style="font-size: 2rem; margin-bottom: 10px;">${subject.icon}</div>
+                <strong style="color: var(--neon-pink); font-family: 'Orbitron';">${subject.name}</strong><br><br>
+                ${subject.desc}<br><br>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px;">
+                    <button class="btn-secondary" onclick="startSubjectSession('${subject.id}')">
+                        <i class="fas fa-comment"></i> ASK QUESTION
+                    </button>
+                    <button class="btn-primary" style="width: auto; padding: 12px 20px;" onclick="startSubjectQuiz('${subject.id}')">
+                        <i class="fas fa-clipboard-question"></i> START QUIZ
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('subject').value = subjectId;
+            document.getElementById('quizSubject').value = subjectId;
+        }
+
+        function startSubjectSession(subjectId) {
+            document.getElementById('subject').value = subjectId;
+            document.querySelector('.btn-nav').click();
+        }
+
+        function startSubjectQuiz(subjectId) {
+            document.getElementById('quizSubject').value = subjectId;
+            document.querySelectorAll('.btn-nav')[1].click(); // Quiz tab
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('historyList');
+            if (state.history.length === 0) {
+                list.innerHTML = '<p style="color: var(--text-muted); font-style: italic;">No history yet. Start asking questions!</p>';
+                return;
+            }
+            
+            list.innerHTML = state.history.slice().reverse().slice(0, 20).map(h => `
+                <div class="history-item">
+                    <div class="history-question">${escapeHtml(h.question)}</div>
+                    <div class="history-answer">${h.answer.substring(0, 200)}${h.answer.length > 200 ? '...' : ''}</div>
+                    <div class="history-meta">${h.subject} • ${new Date(h.timestamp).toLocaleString()}</div>
+                </div>
+            `).join('');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Ask Tutor
+        async function askTutor() {
+            const question = document.getElementById('question').value.trim();
+            const subject = document.getElementById('subject').value;
+            const output = document.getElementById('responseOutput');
+            const btn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+
+            if (!question) {
+                showOutput('responseOutput', 'Please enter a question.', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btnText.innerHTML = '<div class="spinner"></div> PROCESSING...';
+            showOutput('responseOutput', '<span style="color: var(--neon-blue)">[NEURAL_LINK] Establishing secure connection...</span>', 'loading');
 
             try {
                 const payload = {
-                    action: 'chat',
-                    studentId: STUDENT_ID,
-                    data: { 
-                        question: question, 
-                        subject: document.getElementById('subject').value,
-                        level: document.getElementById('level').value
-                    }
+                    studentId: CONFIG.studentId,
+                    data: { question, subject }
                 };
 
-                // SAFE URL BUILDING
-                const finalURL = `${API_URL}?data=${encodeURIComponent(JSON.stringify(payload))}`;
-                
-                const response = await fetch(finalURL, {
-                    method: 'GET',
-                    mode: 'cors'
+                const response = await fetch(CONFIG.apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
                 });
 
-                // --- ROBUST ERROR HANDLING ---
-                if (!response.ok) {
-                    const errorMsg = await response.text();
-                    throw new Error(`CORE_REJECTION_${response.status}`);
-                }
+                if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
                 const data = await response.json();
 
-                if (data.answer) {
-                    // Start Typing Effect
-                    typeStream(responseText, data.answer);
-                    // Reward XP
-                    addXP(10, `LINK SUCCESS: ${document.getElementById('subject').value.toUpperCase()}`);
-                } else {
-                    throw new Error("EMPTY_DATA_STREAM");
-                }
+                if (data.success && data.answer) {
+                    if (data.student) {
+                        state.xp = data.student.xp || state.xp + 10;
+                        state.sessions = data.student.sessions || state.sessions + 1;
+                    } else {
+                        state.xp += 10;
+                        state.sessions += 1;
+                    }
 
+                    localStorage.setItem('tutor_xp', state.xp);
+                    localStorage.setItem('tutor_sessions', state.sessions);
+
+                    state.history.push({
+                        question,
+                        answer: data.answer,
+                        subject,
+                        timestamp: data.meta?.timestamp || new Date().toISOString()
+                    });
+                    localStorage.setItem('tutor_history', JSON.stringify(state.history.slice(-50)));
+
+                    updateXPDisplay();
+                    renderHistory();
+
+                    const formattedAnswer = formatResponse(data.answer);
+                    const meta = `
+                        <div class="response-meta">
+                            <span>Subject: ${data.meta?.subject || subject}</span>
+                            <span>+10 XP earned</span>
+                            <span>${new Date(data.meta?.timestamp || Date.now()).toLocaleTimeString()}</span>
+                        </div>
+                    `;
+                    showOutput('responseOutput', formattedAnswer + meta, 'success');
+                    document.getElementById('question').value = '';
+
+                    if (window.MathJax) MathJax.typesetPromise([output]);
+                } else {
+                    throw new Error(data.error || 'Invalid response from server');
+                }
             } catch (err) {
-                console.error("NEURAL_CORE_ERROR:", err);
-                responseText.innerHTML = `<span style="color:var(--neon-pink)">[CRITICAL_FAILURE]: ${err.message}</span><br><small style="color:#666">Check system console for trace logs.</small>`;
+                console.error('Tutor API Error:', err);
+                showOutput('responseOutput', `<span style="color: var(--neon-pink)">[ERROR] ${err.message}</span><br><br>Check your connection and API settings.`, 'error');
+                document.getElementById('statusDot').classList.remove('online');
+                document.getElementById('statusDot').classList.add('offline');
+                document.getElementById('connectionStatus').textContent = 'OFFLINE';
+            } finally {
+                btn.disabled = false;
+                btnText.innerHTML = '<i class="fas fa-paper-plane"></i> SUBMIT QUERY';
             }
         }
 
-        function typeStream(element, text) {
-            element.innerHTML = "";
-            let i = 0;
-            const speed = 15;
-            const timer = setInterval(() => {
-                if (i < text.length) {
-                    element.innerHTML += text.charAt(i);
-                    i++;
+        // Quiz Functions
+        function setDifficulty(level, btn) {
+            state.quiz.difficulty = level;
+            document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        async function generateQuiz() {
+            const subject = document.getElementById('quizSubject').value;
+            const topic = document.getElementById('quizTopic').value.trim();
+            const count = parseInt(document.getElementById('quizCount').value);
+            const btn = document.getElementById('generateQuizBtn');
+            const btnText = document.getElementById('quizBtnText');
+
+            btn.disabled = true;
+            btnText.innerHTML = '<div class="spinner"></div> GENERATING...';
+            showOutput('quizOutput', '<span style="color: var(--neon-blue)">[QUIZ_ENGINE] Generating questions...</span>', 'loading');
+
+            const difficultyDesc = {
+                easy: 'basic recall and understanding questions suitable for foundation tier',
+                medium: 'application and analysis questions suitable for crossover grades 4-6',
+                hard: 'evaluation and synthesis questions suitable for higher tier grades 7-9'
+            };
+
+            const quizPrompt = `Generate exactly ${count} GCSE ${subject} multiple choice quiz questions${topic ? ` about "${topic}"` : ''}.
+Difficulty: ${state.quiz.difficulty} (${difficultyDesc[state.quiz.difficulty]})
+
+IMPORTANT: Respond ONLY with valid JSON, no markdown, no explanation. Use this exact format:
+{
+  "questions": [
+    {
+      "question": "Question text here?",
+      "options": ["A) First option", "B) Second option", "C) Third option", "D) Fourth option"],
+      "correct": 0,
+      "explanation": "Brief explanation of why the answer is correct and common misconceptions."
+    }
+  ]
+}
+
+Rules:
+- Each question must have exactly 4 options labeled A) B) C) D)
+- "correct" is the index (0-3) of the correct answer
+- Make questions exam-style and appropriate for UK GCSE
+- Include a mix of question types (recall, application, analysis)
+- Explanations should mention mark scheme points where relevant`;
+
+            try {
+                const payload = {
+                    studentId: CONFIG.studentId,
+                    data: { question: quizPrompt, subject }
+                };
+
+                const response = await fetch(CONFIG.apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                const data = await response.json();
+
+                if (data.success && data.answer) {
+                    // Parse the quiz JSON from the response
+                    let quizData;
+                    try {
+                        // Try to extract JSON from the response
+                        const jsonMatch = data.answer.match(/\{[\s\S]*\}/);
+                        if (jsonMatch) {
+                            quizData = JSON.parse(jsonMatch[0]);
+                        } else {
+                            throw new Error('No JSON found in response');
+                        }
+                    } catch (parseErr) {
+                        console.error('Parse error:', parseErr, data.answer);
+                        throw new Error('Failed to parse quiz data. Try again.');
+                    }
+
+                    if (!quizData.questions || !Array.isArray(quizData.questions)) {
+                        throw new Error('Invalid quiz format received');
+                    }
+
+                    // Store quiz state
+                    state.quiz.questions = quizData.questions;
+                    state.quiz.currentIndex = 0;
+                    state.quiz.answers = new Array(quizData.questions.length).fill(null);
+                    state.quiz.subject = subject;
+                    state.quiz.topic = topic;
+
+                    // Hide setup, show quiz
+                    document.getElementById('quizSetup').style.display = 'none';
+                    document.getElementById('quizContainer').style.display = 'block';
+                    document.getElementById('quizOutput').classList.remove('visible');
+
+                    renderQuiz();
                 } else {
-                    clearInterval(timer);
-                    if (window.MathJax) MathJax.typesetPromise();
+                    throw new Error(data.error || 'Failed to generate quiz');
                 }
-            }, speed);
-        }
-
-        function addXP(amount, logMsg) {
-            state.xp += amount;
-            state.totalXp += amount;
-            state.links += 1;
-            
-            const goal = state.level * 100;
-            if(state.xp >= goal) {
-                state.level++;
-                state.xp = state.xp - goal;
-                triggerUpgrade();
+            } catch (err) {
+                console.error('Quiz generation error:', err);
+                showOutput('quizOutput', `<span style="color: var(--neon-pink)">[ERROR] ${err.message}</span>`, 'error');
+            } finally {
+                btn.disabled = false;
+                btnText.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> GENERATE QUIZ';
             }
+        }
+
+        function renderQuiz() {
+            const { questions, answers } = state.quiz;
             
-            updateHUD();
-            logEntry(logMsg);
-            localStorage.setItem('neural_os_state', JSON.stringify(state));
+            // Render progress dots
+            const progressHtml = questions.map((_, i) => {
+                let cls = 'quiz-progress-dot';
+                if (i === state.quiz.currentIndex) cls += ' current';
+                if (answers[i] !== null) {
+                    cls += answers[i].correct ? ' correct' : ' incorrect';
+                }
+                return `<div class="${cls}"></div>`;
+            }).join('');
+            document.getElementById('quizProgress').innerHTML = progressHtml;
+
+            // Render questions
+            const questionsHtml = questions.map((q, qIndex) => {
+                const answered = answers[qIndex] !== null;
+                const isCorrect = answered && answers[qIndex].correct;
+                
+                return `
+                    <div class="quiz-question" id="question-${qIndex}" style="${qIndex !== state.quiz.currentIndex ? 'display:none' : ''}">
+                        <div class="quiz-question-header">
+                            <span class="quiz-question-number">QUESTION ${qIndex + 1} OF ${questions.length}</span>
+                            <span class="quiz-question-points">+20 XP</span>
+                        </div>
+                        <div class="quiz-question-text">${escapeHtml(q.question)}</div>
+                        <div class="quiz-options">
+                            ${q.options.map((opt, oIndex) => {
+                                let optClass = 'quiz-option';
+                                if (answered) {
+                                    optClass += ' disabled';
+                                    if (oIndex === q.correct) optClass += ' correct';
+                                    else if (answers[qIndex].selected === oIndex) optClass += ' incorrect';
+                                } else if (answers[qIndex]?.selected === oIndex) {
+                                    optClass += ' selected';
+                                }
+                                return `
+                                    <div class="${optClass}" onclick="selectAnswer(${qIndex}, ${oIndex})">
+                                        <span class="quiz-option-letter">${String.fromCharCode(65 + oIndex)}</span>
+                                        <span>${escapeHtml(opt.replace(/^[A-D]\)\s*/, ''))}</span>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                        <div class="quiz-explanation ${answered ? 'visible' : ''}" id="explanation-${qIndex}">
+                            <strong style="color: ${isCorrect ? 'var(--neon-green)' : 'var(--neon-pink)'}">
+                                ${isCorrect ? '✓ Correct!' : '✗ Incorrect'}
+                            </strong><br><br>
+                            ${escapeHtml(q.explanation)}
+                        </div>
+                        ${answered && qIndex < questions.length - 1 ? `
+                            <button class="btn-primary" style="margin-top: 20px;" onclick="nextQuestion()">
+                                NEXT QUESTION <i class="fas fa-arrow-right"></i>
+                            </button>
+                        ` : ''}
+                        ${answered && qIndex === questions.length - 1 ? `
+                            <button class="btn-primary" style="margin-top: 20px;" onclick="showResults()">
+                                VIEW RESULTS <i class="fas fa-trophy"></i>
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('quizQuestions').innerHTML = questionsHtml;
+
+            if (window.MathJax) MathJax.typesetPromise();
         }
 
-        function updateHUD() {
-            const goal = state.level * 100;
-            const ranks = ["INITIATE", "DATA DRIFTER", "NEURAL SCHOLAR", "CORE ARCHITECT", "SYSTEM MASTER"];
-            state.rank = ranks[Math.min(state.level - 1, ranks.length - 1)];
+        function selectAnswer(qIndex, optIndex) {
+            if (state.quiz.answers[qIndex] !== null) return; // Already answered
 
-            document.getElementById('currentLevel').innerText = state.level;
-            document.getElementById('xpFill').style.width = (state.xp / goal * 100) + '%';
-            document.getElementById('xpText').innerText = `${state.xp} / ${goal}`;
-            document.getElementById('rankName').innerText = state.rank;
-            document.getElementById('totalXp').innerText = state.totalXp;
-            document.getElementById('linkCount').innerText = state.links;
+            const question = state.quiz.questions[qIndex];
+            const isCorrect = optIndex === question.correct;
+
+            state.quiz.answers[qIndex] = {
+                selected: optIndex,
+                correct: isCorrect
+            };
+
+            // Award XP for correct answers
+            if (isCorrect) {
+                state.xp += 20;
+                localStorage.setItem('tutor_xp', state.xp);
+                updateXPDisplay();
+            }
+
+            renderQuiz();
         }
 
-        function logEntry(msg) {
-            const log = document.getElementById('sessionLogs');
-            const div = document.createElement('div');
-            div.className = 'activity-log';
-            div.innerText = `> ${msg} ... OK`;
-            log.prepend(div);
+        function nextQuestion() {
+            state.quiz.currentIndex++;
+            renderQuiz();
+            // Scroll to top of quiz
+            document.getElementById('quizContainer').scrollIntoView({ behavior: 'smooth' });
         }
 
-        function triggerUpgrade() {
-            document.getElementById('levelUp').style.display = 'flex';
+        function showResults() {
+            const { questions, answers, subject, topic } = state.quiz;
+            const correct = answers.filter(a => a?.correct).length;
+            const total = questions.length;
+            const percentage = Math.round((correct / total) * 100);
+
+            document.getElementById('quizQuestions').style.display = 'none';
+            document.getElementById('quizProgress').style.display = 'none';
+            document.getElementById('quizResults').style.display = 'block';
+
+            document.getElementById('finalScore').textContent = `${percentage}%`;
+
+            let message = '';
+            if (percentage === 100) message = '🏆 Perfect score! Outstanding work!';
+            else if (percentage >= 80) message = '⭐ Excellent! You really know your stuff!';
+            else if (percentage >= 60) message = '👍 Good job! Keep practicing to improve.';
+            else if (percentage >= 40) message = '📚 Not bad, but review the explanations above.';
+            else message = '💪 Keep studying! Try an easier difficulty or review the topic.';
+
+            document.getElementById('scoreMessage').textContent = message;
+
+            // Add to history
+            state.history.push({
+                question: `Quiz: ${subject}${topic ? ' - ' + topic : ''} (${state.quiz.difficulty})`,
+                answer: `Score: ${correct}/${total} (${percentage}%)`,
+                subject,
+                timestamp: new Date().toISOString()
+            });
+            localStorage.setItem('tutor_history', JSON.stringify(state.history.slice(-50)));
+            state.sessions++;
+            localStorage.setItem('tutor_sessions', state.sessions);
+            updateXPDisplay();
+            renderHistory();
         }
+
+        function resetQuiz() {
+            state.quiz = {
+                questions: [],
+                currentIndex: 0,
+                answers: [],
+                difficulty: state.quiz.difficulty,
+                subject: 'Maths',
+                topic: ''
+            };
+            document.getElementById('quizSetup').style.display = 'block';
+            document.getElementById('quizContainer').style.display = 'none';
+            document.getElementById('quizQuestions').style.display = 'block';
+            document.getElementById('quizProgress').style.display = 'flex';
+            document.getElementById('quizResults').style.display = 'none';
+            document.getElementById('quizTopic').value = '';
+        }
+
+        function retryQuiz() {
+            // Keep same questions, reset answers
+            state.quiz.currentIndex = 0;
+            state.quiz.answers = new Array(state.quiz.questions.length).fill(null);
+            document.getElementById('quizQuestions').style.display = 'block';
+            document.getElementById('quizProgress').style.display = 'flex';
+            document.getElementById('quizResults').style.display = 'none';
+            renderQuiz();
+        }
+
+        // Utility functions
+        function formatResponse(text) {
+            return text
+                .replace(/\*\*(.*?)\*\*/g, '<strong style="color: var(--neon-pink)">$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/`(.*?)`/g, '<code style="background: var(--input-bg); padding: 2px 6px; border-radius: 4px;">$1</code>')
+                .replace(/\n/g, '<br>')
+                .replace(/---/g, '<hr style="border: none; border-top: 1px solid var(--glass-border); margin: 15px 0;">');
+        }
+
+        function showOutput(elementId, content, type = 'info') {
+            const output = document.getElementById(elementId);
+            output.className = 'terminal-display visible';
+            if (type === 'error') output.classList.add('error');
+            if (type === 'success') output.classList.add('success');
+            output.innerHTML = content;
+        }
+
+        function saveSettings() {
+            const apiUrl = document.getElementById('apiUrl').value.trim();
+            const studentId = document.getElementById('customStudentId').value.trim();
+
+            if (apiUrl) {
+                CONFIG.apiUrl = apiUrl;
+                localStorage.setItem('tutor_api_url', apiUrl);
+            }
+
+            if (studentId) {
+                const cleanId = studentId.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 50);
+                CONFIG.studentId = cleanId || generateStudentId();
+                localStorage.setItem('tutor_student_id', CONFIG.studentId);
+                document.getElementById('studentIdDisplay').textContent = CONFIG.studentId.slice(0, 12);
+            }
+
+            document.getElementById('statusDot').classList.add('online');
+            document.getElementById('statusDot').classList.remove('offline');
+            document.getElementById('connectionStatus').textContent = 'ONLINE';
+
+            alert('Settings saved successfully!');
+        }
+
+        // Keyboard shortcuts
+        document.getElementById('question').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) askTutor();
+        });
     </script>
 </body>
 </html>
