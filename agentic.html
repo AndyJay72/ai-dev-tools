@@ -1201,11 +1201,9 @@
                     data: { question, subject }
                 };
 
-                const response = await fetch(CONFIG.apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+                // Use GET with query param to avoid CORS preflight
+                const url = `${CONFIG.apiUrl}?data=${encodeURIComponent(JSON.stringify(payload))}`;
+                const response = await fetch(url);
 
                 if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
@@ -1313,11 +1311,9 @@ Rules:
                     data: { question: quizPrompt, subject }
                 };
 
-                const response = await fetch(CONFIG.apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+                // Use GET with query param to avoid CORS preflight
+                const url = `${CONFIG.apiUrl}?data=${encodeURIComponent(JSON.stringify(payload))}`;
+                const response = await fetch(url);
 
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
