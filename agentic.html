@@ -810,6 +810,19 @@
                     <i class="fas fa-sun" id="themeIcon"></i>
                     <span id="themeLabel">LIGHT</span>
                 </button>
+                <button class="theme-toggle" onclick="logout()" style="background: rgba(247, 37, 133, 0.2); border-color: var(--neon-pink);">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>LOGOUT</span>
+                </button>
+                <script>
+                function logout() {
+                    localStorage.removeItem('tutor_auth_token');
+                    localStorage.removeItem('tutor_refresh_token');
+                    localStorage.removeItem('tutor_expires_at');
+                    localStorage.removeItem('tutor_user');
+                    window.location.href = 'login.html';
+                }
+                </script>
             </div>
         </header>
 
@@ -820,6 +833,12 @@
             </button>
             <button class="btn-nav" onclick="setView('quiz', this)">
                 <i class="fas fa-clipboard-question"></i> QUIZ MODE
+            </button>
+            <button class="btn-nav" onclick="setView('lessons', this)">
+                <i class="fas fa-book-open"></i> LESSONS
+            </button>
+            <button class="btn-nav" onclick="setView('homework', this)">
+                <i class="fas fa-clipboard-check"></i> HOMEWORK
             </button>
             <button class="btn-nav" onclick="setView('subjects', this)">
                 <i class="fas fa-atom"></i> SUBJECTS
@@ -979,6 +998,71 @@
                 </div>
             </section>
 
+            <!-- Tab: Lessons -->
+            <section id="view-lessons" class="view-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-book-open"></i> LESSON LIBRARY</h2>
+                    <p>Access AI-generated lessons aligned with GCSE curriculum</p>
+                </div>
+
+                <div class="control-group">
+                    <label>Filter by Subject</label>
+                    <select id="lessonSubjectFilter" onchange="loadLessons()">
+                        <option value="">All Subjects</option>
+                        <option value="Maths">Maths</option>
+                        <option value="English">English</option>
+                        <option value="Science">Science</option>
+                        <option value="History">History</option>
+                        <option value="Geography">Geography</option>
+                        <option value="Computer Science">Computer Science</option>
+                    </select>
+                </div>
+
+                <div id="lessonsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-top: 20px;">
+                    <p style="color: var(--text-muted); text-align: center; grid-column: 1/-1;">Loading lessons...</p>
+                </div>
+
+                <div id="lessonViewer" style="display: none; margin-top: 30px;">
+                    <button class="btn-secondary" onclick="closeLessonViewer()" style="margin-bottom: 15px;">
+                        <i class="fas fa-arrow-left"></i> BACK TO LESSONS
+                    </button>
+                    <div id="lessonContent" class="terminal-display visible"></div>
+                </div>
+
+                <div id="lessonOutput" class="terminal-display"></div>
+            </section>
+
+            <!-- Tab: Homework -->
+            <section id="view-homework" class="view-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-clipboard-check"></i> HOMEWORK CENTER</h2>
+                    <p>Complete assignments and receive instant feedback</p>
+                </div>
+
+                <div id="homeworkList" style="margin-top: 20px;">
+                    <!-- Homework assignments will be listed here -->
+                </div>
+
+                <div id="homeworkSubmissionForm" style="display: none; margin-top: 30px;">
+                    <button class="btn-secondary" onclick="closeHomeworkSubmission()" style="margin-bottom: 15px;">
+                        <i class="fas fa-arrow-left"></i> BACK TO ASSIGNMENTS
+                    </button>
+                    <div id="homeworkQuestions"></div>
+                    <button class="btn-primary" onclick="submitHomework()" id="submitHomeworkBtn" style="margin-top: 20px;">
+                        <span id="submitHomeworkText"><i class="fas fa-paper-plane"></i> SUBMIT HOMEWORK</span>
+                    </button>
+                </div>
+
+                <div id="homeworkResults" style="display: none; margin-top: 30px;">
+                    <button class="btn-secondary" onclick="closeHomeworkResults()" style="margin-bottom: 15px;">
+                        <i class="fas fa-arrow-left"></i> BACK TO ASSIGNMENTS
+                    </button>
+                    <div id="homeworkResultsContent" class="terminal-display visible"></div>
+                </div>
+
+                <div id="homeworkOutput" class="terminal-display"></div>
+            </section>
+
             <!-- Tab: Settings -->
             <section id="view-settings" class="view-section">
                 <label>API Configuration</label>
@@ -1008,15 +1092,25 @@
     <script>
         // Configuration
         const CONFIG = {
-            apiUrl: localStorage.getItem('tutor_api_url') || 'https://n8n.srv1090894.hstgr.cloud/webhook/tutor',
-            studentId: localStorage.getItem('tutor_student_id') || generateStudentId()
+            apiUrl: localStorage.getItem('tutor_api_url') || 'https://n8n.srv1090894.hstgr.cloud/webhook',
+            authToken: localStorage.getItem('tutor_auth_token') || null,
+            userId: null,
+            studentId: null
         };
 
         // State
         const state = {
-            xp: parseInt(localStorage.getItem('tutor_xp')) || 0,
-            sessions: parseInt(localStorage.getItem('tutor_sessions')) || 0,
-            history: JSON.parse(localStorage.getItem('tutor_history')) || [],
+            user: null,
+            student: null,
+            xp: 0,
+            sessions: 0,
+            currentLevel: 1,
+            rank: 'INITIATE',
+            history: [],
+            lessons: [],
+            homework: [],
+            subjects: [],
+            achievements: [],
             theme: localStorage.getItem('tutor_theme') || 'dark',
             quiz: {
                 questions: [],
@@ -1043,15 +1137,77 @@
         ];
 
         // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('studentIdDisplay').textContent = CONFIG.studentId.slice(0, 12);
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check authentication first
+            const token = localStorage.getItem('tutor_auth_token');
+            const expiresAt = localStorage.getItem('tutor_expires_at');
+            
+            if (!token || !expiresAt || new Date(expiresAt) <= new Date()) {
+                console.log('No valid authentication token, redirecting to login');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            CONFIG.authToken = token;
+            
+            // Load user data from localStorage (cached from login)
+            const user = JSON.parse(localStorage.getItem('tutor_user') || '{}');
+            if (!user.user_id) {
+                console.error('No user_id found, redirecting to login');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            CONFIG.userId = user.user_id;
+            state.user = user;
+            
+            // Display user name
+            document.getElementById('studentIdDisplay').textContent = user.full_name || user.email;
             document.getElementById('apiUrl').value = CONFIG.apiUrl;
-            document.getElementById('customStudentId').value = CONFIG.studentId;
+            
             applyTheme(state.theme);
-            updateXPDisplay();
             renderSubjectGrid();
-            renderHistory();
+            
+            // Load all data from database
+            await loadStudentProfile();
+            await loadDashboardStats();
+            await loadHistory();
+            
+            checkConnection();
         });
+        
+        // Check if workflow is reachable
+        async function checkConnection() {
+            try {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+                
+                const response = await fetch(CONFIG.apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        studentId: CONFIG.studentId,
+                        data: { question: 'connection test', subject: 'General' }
+                    }),
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeout);
+                
+                if (response.ok) {
+                    document.getElementById('statusDot').classList.add('online');
+                    document.getElementById('statusDot').classList.remove('offline');
+                    document.getElementById('connectionStatus').textContent = 'ONLINE';
+                } else {
+                    throw new Error('Connection failed');
+                }
+            } catch (err) {
+                document.getElementById('statusDot').classList.remove('online');
+                document.getElementById('statusDot').classList.add('offline');
+                document.getElementById('connectionStatus').textContent = 'OFFLINE';
+                console.warn('Initial connection check failed:', err.message);
+            }
+        }
 
         // Theme functions
         function toggleTheme() {
@@ -1073,10 +1229,65 @@
             }
         }
 
-        function generateStudentId() {
-            const id = 'STU_' + Math.random().toString(36).substring(2, 10).toUpperCase();
-            localStorage.setItem('tutor_student_id', id);
-            return id;
+        // Load student profile from database
+        async function loadStudentProfile() {
+            try {
+                const response = await apiCall('/tutor', {
+                    action: 'get_student_profile',
+                    user_id: CONFIG.userId
+                });
+                
+                if (response.success && response.student) {
+                    state.student = response.student;
+                    CONFIG.studentId = response.student.student_id;
+                    state.xp = response.student.xp_points || 0;
+                    state.currentLevel = response.student.current_level || 1;
+                    state.sessions = response.student.total_lessons_completed || 0;
+                    updateXPDisplay();
+                }
+            } catch (err) {
+                console.error('Failed to load student profile:', err);
+            }
+        }
+        
+        // Load dashboard statistics
+        async function loadDashboardStats() {
+            try {
+                const response = await apiCall('/tutor', {
+                    action: 'get_dashboard_stats',
+                    user_id: CONFIG.userId
+                });
+                
+                if (response.success && response.stats) {
+                    // Update UI with real stats
+                    state.subjects = response.stats.subjects || [];
+                    state.achievements = response.stats.achievements || [];
+                }
+            } catch (err) {
+                console.error('Failed to load dashboard stats:', err);
+            }
+        }
+        
+        // Generic API call helper with auth
+        async function apiCall(endpoint, data) {
+            const url = CONFIG.apiUrl + endpoint;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${CONFIG.authToken}`
+                },
+                body: JSON.stringify({
+                    user_id: CONFIG.userId,
+                    ...data
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            return await response.json();
         }
 
         function setView(viewId, btn) {
@@ -1084,6 +1295,13 @@
             document.querySelectorAll('.btn-nav').forEach(b => b.classList.remove('active'));
             document.getElementById('view-' + viewId).classList.add('active');
             btn.classList.add('active');
+            
+            // Load data when switching to lessons or homework tabs
+            if (viewId === 'lessons') {
+                loadLessons();
+            } else if (viewId === 'homework') {
+                loadHomework();
+            }
         }
 
         function getRank(xp) {
@@ -1156,6 +1374,23 @@
             document.querySelectorAll('.btn-nav')[1].click(); // Quiz tab
         }
 
+        async function loadHistory() {
+            try {
+                const data = await apiCall('/tutor', {
+                    action: 'get_history',
+                    user_id: CONFIG.userId,
+                    limit: 20
+                });
+                
+                if (data.success && data.history) {
+                    state.history = data.history;
+                    renderHistory();
+                }
+            } catch (err) {
+                console.error('Failed to load history:', err);
+            }
+        }
+        
         function renderHistory() {
             const list = document.getElementById('historyList');
             if (state.history.length === 0) {
@@ -1163,11 +1398,11 @@
                 return;
             }
             
-            list.innerHTML = state.history.slice().reverse().slice(0, 20).map(h => `
+            list.innerHTML = state.history.map(h => `
                 <div class="history-item">
-                    <div class="history-question">${escapeHtml(h.question)}</div>
-                    <div class="history-answer">${h.answer.substring(0, 200)}${h.answer.length > 200 ? '...' : ''}</div>
-                    <div class="history-meta">${h.subject} • ${new Date(h.timestamp).toLocaleString()}</div>
+                    <div class="history-question">${escapeHtml(h.user_message || h.question)}</div>
+                    <div class="history-answer">${(h.bot_response || h.answer).substring(0, 200)}${(h.bot_response || h.answer).length > 200 ? '...' : ''}</div>
+                    <div class="history-meta">${h.interaction_type || 'chat'} • ${new Date(h.created_at || h.timestamp).toLocaleString()}</div>
                 </div>
             `).join('');
         }
@@ -1176,6 +1411,162 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+        
+        // Load lessons from database
+        async function loadLessons() {
+            const subjectFilter = document.getElementById('lessonSubjectFilter').value;
+            const grid = document.getElementById('lessonsGrid');
+            
+            try {
+                grid.innerHTML = '<p style="color: var(--text-muted); text-align: center; grid-column: 1/-1;">Loading lessons...</p>';
+                
+                const data = await apiCall('/tutor', {
+                    action: 'get_lessons',
+                    subject: subjectFilter || null,
+                    is_published: true
+                });
+                
+                if (data.success && data.lessons) {
+                    state.lessons = data.lessons;
+                    
+                    if (data.lessons.length === 0) {
+                        grid.innerHTML = '<p style="color: var(--text-muted); text-align: center; grid-column: 1/-1;">No lessons available yet.</p>';
+                        return;
+                    }
+                    
+                    grid.innerHTML = data.lessons.map(lesson => `
+                        <div class="history-item" style="cursor: pointer;" onclick="viewLesson(${lesson.lesson_id})">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                                <strong style="color: var(--neon-blue);">${escapeHtml(lesson.title)}</strong>
+                                <span class="quiz-question-points">${lesson.subject}</span>
+                            </div>
+                            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;">
+                                ${escapeHtml(lesson.topic)}
+                            </div>
+                            <div style="display: flex; gap: 10px; font-size: 0.7rem; color: var(--text-muted);">
+                                <span><i class="fas fa-clock"></i> ${lesson.estimated_duration || 30} min</span>
+                                <span><i class="fas fa-signal"></i> ${lesson.difficulty || 'Mixed'}</span>
+                                ${lesson.view_count ? `<span><i class="fas fa-eye"></i> ${lesson.view_count}</span>` : ''}
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (err) {
+                console.error('Failed to load lessons:', err);
+                grid.innerHTML = '<p style="color: var(--neon-pink); text-align: center; grid-column: 1/-1;">Failed to load lessons. Check connection.</p>';
+            }
+        }
+        
+        function viewLesson(lessonId) {
+            const lesson = state.lessons.find(l => l.lesson_id === lessonId);
+            if (!lesson) return;
+            
+            document.getElementById('lessonsGrid').style.display = 'none';
+            document.getElementById('lessonViewer').style.display = 'block';
+            
+            const content = document.getElementById('lessonContent');
+            content.innerHTML = `
+                <h2 style="color: var(--neon-pink); font-family: 'Orbitron'; margin-bottom: 20px;">${escapeHtml(lesson.title)}</h2>
+                <div style="display: flex; gap: 15px; margin-bottom: 25px; flex-wrap: wrap;">
+                    <span class="stat-chip">${lesson.subject}</span>
+                    <span class="stat-chip">${lesson.topic}</span>
+                    <span class="stat-chip">${lesson.difficulty || 'Mixed'} tier</span>
+                    ${lesson.estimated_duration ? `<span class="stat-chip"><i class="fas fa-clock"></i> ${lesson.estimated_duration} min</span>` : ''}
+                </div>
+                <div style="line-height: 1.8;">
+                    ${typeof lesson.content === 'string' ? lesson.content : JSON.stringify(lesson.content, null, 2)}
+                </div>
+            `;
+            
+            if (window.MathJax) MathJax.typesetPromise([content]);
+        }
+        
+        function closeLessonViewer() {
+            document.getElementById('lessonsGrid').style.display = 'grid';
+            document.getElementById('lessonViewer').style.display = 'none';
+        }
+        
+        // Load homework from database
+        async function loadHomework() {
+            const list = document.getElementById('homeworkList');
+            
+            try {
+                list.innerHTML = '<p style="color: var(--text-muted);">Loading homework...</p>';
+                
+                const data = await apiCall('/tutor', {
+                    action: 'get_homework',
+                    student_id: CONFIG.studentId,
+                    is_published: true
+                });
+                
+                if (data.success && data.homework) {
+                    state.homework = data.homework;
+                    
+                    if (data.homework.length === 0) {
+                        list.innerHTML = '<p style="color: var(--text-muted); font-style: italic;">No homework assignments available yet.</p>';
+                        return;
+                    }
+                    
+                    list.innerHTML = data.homework.map(hw => {
+                        const submission = hw.submission;
+                        const status = submission ? submission.status : 'not_started';
+                        const statusColors = {
+                            'not_started': 'var(--text-muted)',
+                            'draft': 'var(--neon-orange)',
+                            'submitted': 'var(--neon-blue)',
+                            'graded': 'var(--neon-green)',
+                            'returned': 'var(--neon-purple)'
+                        };
+                        
+                        return `
+                            <div class="history-item">
+                                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                                    <strong style="color: var(--neon-blue);">${escapeHtml(hw.title)}</strong>
+                                    <span style="color: ${statusColors[status]}; font-size: 0.7rem; font-family: 'Orbitron';">${status.toUpperCase().replace('_', ' ')}</span>
+                                </div>
+                                <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 10px;">
+                                    ${escapeHtml(hw.description || hw.topic)}
+                                </div>
+                                <div style="display: flex; gap: 15px; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 15px;">
+                                    <span>${hw.subject}</span>
+                                    <span><i class="fas fa-award"></i> ${hw.total_marks} marks</span>
+                                    ${hw.due_date ? `<span><i class="fas fa-calendar"></i> Due ${new Date(hw.due_date).toLocaleDateString()}</span>` : ''}
+                                </div>
+                                ${submission && submission.status === 'graded' ? `
+                                    <div style="background: rgba(0, 245, 212, 0.1); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+                                        <strong style="color: var(--neon-green);">Score: ${submission.percentage}% (${submission.grade})</strong>
+                                    </div>
+                                ` : ''}
+                                <button class="btn-secondary" onclick="${submission && submission.status === 'graded' ? `viewHomeworkResults(${hw.homework_id})` : `startHomework(${hw.homework_id})`}">
+                                    <i class="fas fa-${submission && submission.status === 'graded' ? 'eye' : 'pencil'}"></i> ${submission && submission.status === 'graded' ? 'VIEW RESULTS' : 'START HOMEWORK'}
+                                </button>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            } catch (err) {
+                console.error('Failed to load homework:', err);
+                list.innerHTML = '<p style="color: var(--neon-pink);">Failed to load homework. Check connection.</p>';
+            }
+        }
+        
+        function startHomework(homeworkId) {
+            alert('Homework submission feature coming soon! Homework ID: ' + homeworkId);
+        }
+        
+        function viewHomeworkResults(homeworkId) {
+            alert('View results feature coming soon! Homework ID: ' + homeworkId);
+        }
+        
+        function closeHomeworkSubmission() {
+            document.getElementById('homeworkList').style.display = 'block';
+            document.getElementById('homeworkSubmissionForm').style.display = 'none';
+        }
+        
+        function closeHomeworkResults() {
+            document.getElementById('homeworkList').style.display = 'block';
+            document.getElementById('homeworkResults').style.display = 'none';
         }
 
         // Ask Tutor
@@ -1196,41 +1587,24 @@
             showOutput('responseOutput', '<span style="color: var(--neon-blue)">[NEURAL_LINK] Establishing secure connection...</span>', 'loading');
 
             try {
-                const payload = {
-                    studentId: CONFIG.studentId,
-                    data: { question, subject }
-                };
-
-                // Use GET with query param to avoid CORS preflight
-                const url = `${CONFIG.apiUrl}?data=${encodeURIComponent(JSON.stringify(payload))}`;
-                const response = await fetch(url);
-
-                if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-
-                const data = await response.json();
+                const data = await apiCall('/tutor', {
+                    action: 'ask_question',
+                    question,
+                    subject,
+                    student_id: CONFIG.studentId
+                });
 
                 if (data.success && data.answer) {
-                    if (data.student) {
-                        state.xp = data.student.xp || state.xp + 10;
-                        state.sessions = data.student.sessions || state.sessions + 1;
-                    } else {
-                        state.xp += 10;
-                        state.sessions += 1;
-                    }
-
-                    localStorage.setItem('tutor_xp', state.xp);
-                    localStorage.setItem('tutor_sessions', state.sessions);
-
-                    state.history.push({
-                        question,
-                        answer: data.answer,
-                        subject,
-                        timestamp: data.meta?.timestamp || new Date().toISOString()
-                    });
-                    localStorage.setItem('tutor_history', JSON.stringify(state.history.slice(-50)));
-
-                    updateXPDisplay();
-                    renderHistory();
+                    // Reload student profile to get updated XP
+                    await loadStudentProfile();
+                    
+                    // Reload history from database
+                    await loadHistory();
+                    
+                    // Update connection status to online on successful response
+                    document.getElementById('statusDot').classList.add('online');
+                    document.getElementById('statusDot').classList.remove('offline');
+                    document.getElementById('connectionStatus').textContent = 'ONLINE';
 
                     const formattedAnswer = formatResponse(data.answer);
                     const meta = `
@@ -1249,7 +1623,22 @@
                 }
             } catch (err) {
                 console.error('Tutor API Error:', err);
-                showOutput('responseOutput', `<span style="color: var(--neon-pink)">[ERROR] ${err.message}</span><br><br>Check your connection and API settings.`, 'error');
+                let errorMsg = err.message;
+                
+                // Provide more specific error guidance
+                if (err.message.includes('Failed to fetch')) {
+                    errorMsg = 'Cannot connect to server. Check your network and webhook URL in Settings.';
+                } else if (err.message.includes('HTTP 404')) {
+                    errorMsg = 'Webhook not found. Verify your workflow is activated in n8n.';
+                } else if (err.message.includes('HTTP 500')) {
+                    errorMsg = 'Server error. Check n8n workflow execution logs for details.';
+                } else if (err.message.includes('PROCESSING_ERROR')) {
+                    errorMsg = 'Database or AI processing error. Check PostgreSQL connection and OpenAI credentials.';
+                }
+                
+                showOutput('responseOutput', `<span style="color: var(--neon-pink)">[ERROR] ${errorMsg}</span><br><br>💡 <strong>Troubleshooting:</strong><br>• Verify workflow is active in n8n<br>• Check PostgreSQL database connection<br>• Verify OpenAI API credentials<br>• Review n8n execution logs`, 'error');
+                
+                // Update connection status
                 document.getElementById('statusDot').classList.remove('online');
                 document.getElementById('statusDot').classList.add('offline');
                 document.getElementById('connectionStatus').textContent = 'OFFLINE';
@@ -1260,6 +1649,49 @@
         }
 
         // Quiz Functions
+        function parseQuizFromText(text, expectedCount) {
+            const questions = [];
+            const questionBlocks = text.split(/Q\d+:/i).filter(b => b.trim());
+            
+            for (let block of questionBlocks) {
+                const lines = block.split('\n').map(l => l.trim()).filter(l => l);
+                if (lines.length < 6) continue;
+                
+                const question = lines[0].replace(/^[:\-\s]+/, '');
+                const options = [];
+                let correctAnswer = 0;
+                let explanation = '';
+                
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i];
+                    if (line.match(/^[A-D]\)/i)) {
+                        options.push(line);
+                    } else if (line.match(/^Correct:/i)) {
+                        const correctLetter = line.match(/[A-D]/i)?.[0]?.toUpperCase();
+                        correctAnswer = correctLetter ? correctLetter.charCodeAt(0) - 65 : 0;
+                    } else if (line.match(/^Explanation:/i)) {
+                        explanation = line.replace(/^Explanation:/i, '').trim();
+                        // Grab any continuation lines
+                        for (let j = i + 1; j < lines.length; j++) {
+                            if (lines[j].match(/^[A-D]\)/i) || lines[j].match(/^Q\d+:/i)) break;
+                            explanation += ' ' + lines[j];
+                        }
+                    }
+                }
+                
+                if (question && options.length === 4) {
+                    questions.push({
+                        question,
+                        options,
+                        correct: correctAnswer,
+                        explanation: explanation || 'Review the topic to understand this concept better.'
+                    });
+                }
+            }
+            
+            return { questions: questions.slice(0, expectedCount) };
+        }
+
         function setDifficulty(level, btn) {
             state.quiz.difficulty = level;
             document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
@@ -1283,60 +1715,44 @@
                 hard: 'evaluation and synthesis questions suitable for higher tier grades 7-9'
             };
 
-            const quizPrompt = `Generate exactly ${count} GCSE ${subject} multiple choice quiz questions${topic ? ` about "${topic}"` : ''}.
-Difficulty: ${state.quiz.difficulty} (${difficultyDesc[state.quiz.difficulty]})
+            const quizPrompt = `Create ${count} GCSE ${subject} multiple choice questions${topic ? ` about "${topic}"` : ''}. Difficulty: ${state.quiz.difficulty} tier.
 
-IMPORTANT: Respond ONLY with valid JSON, no markdown, no explanation. Use this exact format:
-{
-  "questions": [
-    {
-      "question": "Question text here?",
-      "options": ["A) First option", "B) Second option", "C) Third option", "D) Fourth option"],
-      "correct": 0,
-      "explanation": "Brief explanation of why the answer is correct and common misconceptions."
-    }
-  ]
-}
+Format each question EXACTLY like this:
 
-Rules:
-- Each question must have exactly 4 options labeled A) B) C) D)
-- "correct" is the index (0-3) of the correct answer
-- Make questions exam-style and appropriate for UK GCSE
-- Include a mix of question types (recall, application, analysis)
-- Explanations should mention mark scheme points where relevant`;
+Q1: [Question text]?
+A) [Option 1]
+B) [Option 2]
+C) [Option 3]
+D) [Option 4]
+Correct: [A/B/C/D]
+Explanation: [Why the correct answer is right and why others are wrong]
+
+Q2: [Next question...]
+
+Make questions exam-appropriate for UK GCSE. Include mark scheme points where relevant.`;
 
             try {
-                const payload = {
-                    studentId: CONFIG.studentId,
-                    data: { question: quizPrompt, subject }
-                };
-
-                // Use GET with query param to avoid CORS preflight
-                const url = `${CONFIG.apiUrl}?data=${encodeURIComponent(JSON.stringify(payload))}`;
-                const response = await fetch(url);
-
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-                const data = await response.json();
+                const data = await apiCall('/tutor', {
+                    action: 'generate_quiz',
+                    question: quizPrompt,
+                    subject,
+                    count,
+                    difficulty: state.quiz.difficulty,
+                    topic: topic || null,
+                    student_id: CONFIG.studentId
+                });
 
                 if (data.success && data.answer) {
-                    // Parse the quiz JSON from the response
+                    // Parse the quiz from text format
                     let quizData;
                     try {
-                        // Try to extract JSON from the response
-                        const jsonMatch = data.answer.match(/\{[\s\S]*\}/);
-                        if (jsonMatch) {
-                            quizData = JSON.parse(jsonMatch[0]);
-                        } else {
-                            throw new Error('No JSON found in response');
+                        quizData = parseQuizFromText(data.answer, count);
+                        if (!quizData.questions || quizData.questions.length === 0) {
+                            throw new Error('No valid questions found. Try being more specific with your topic.');
                         }
                     } catch (parseErr) {
                         console.error('Parse error:', parseErr, data.answer);
-                        throw new Error('Failed to parse quiz data. Try again.');
-                    }
-
-                    if (!quizData.questions || !Array.isArray(quizData.questions)) {
-                        throw new Error('Invalid quiz format received');
+                        throw new Error('Failed to parse quiz. Try regenerating or simplify your topic.');
                     }
 
                     // Store quiz state
@@ -1443,11 +1859,10 @@ Rules:
                 correct: isCorrect
             };
 
-            // Award XP for correct answers
+            // Award XP for correct answers - will be tracked in database
             if (isCorrect) {
-                state.xp += 20;
-                localStorage.setItem('tutor_xp', state.xp);
-                updateXPDisplay();
+                // Reload student profile to get updated XP
+                loadStudentProfile();
             }
 
             renderQuiz();
@@ -1464,109 +1879,3 @@ Rules:
             const { questions, answers, subject, topic } = state.quiz;
             const correct = answers.filter(a => a?.correct).length;
             const total = questions.length;
-            const percentage = Math.round((correct / total) * 100);
-
-            document.getElementById('quizQuestions').style.display = 'none';
-            document.getElementById('quizProgress').style.display = 'none';
-            document.getElementById('quizResults').style.display = 'block';
-
-            document.getElementById('finalScore').textContent = `${percentage}%`;
-
-            let message = '';
-            if (percentage === 100) message = '🏆 Perfect score! Outstanding work!';
-            else if (percentage >= 80) message = '⭐ Excellent! You really know your stuff!';
-            else if (percentage >= 60) message = '👍 Good job! Keep practicing to improve.';
-            else if (percentage >= 40) message = '📚 Not bad, but review the explanations above.';
-            else message = '💪 Keep studying! Try an easier difficulty or review the topic.';
-
-            document.getElementById('scoreMessage').textContent = message;
-
-            // Add to history
-            state.history.push({
-                question: `Quiz: ${subject}${topic ? ' - ' + topic : ''} (${state.quiz.difficulty})`,
-                answer: `Score: ${correct}/${total} (${percentage}%)`,
-                subject,
-                timestamp: new Date().toISOString()
-            });
-            localStorage.setItem('tutor_history', JSON.stringify(state.history.slice(-50)));
-            state.sessions++;
-            localStorage.setItem('tutor_sessions', state.sessions);
-            updateXPDisplay();
-            renderHistory();
-        }
-
-        function resetQuiz() {
-            state.quiz = {
-                questions: [],
-                currentIndex: 0,
-                answers: [],
-                difficulty: state.quiz.difficulty,
-                subject: 'Maths',
-                topic: ''
-            };
-            document.getElementById('quizSetup').style.display = 'block';
-            document.getElementById('quizContainer').style.display = 'none';
-            document.getElementById('quizQuestions').style.display = 'block';
-            document.getElementById('quizProgress').style.display = 'flex';
-            document.getElementById('quizResults').style.display = 'none';
-            document.getElementById('quizTopic').value = '';
-        }
-
-        function retryQuiz() {
-            // Keep same questions, reset answers
-            state.quiz.currentIndex = 0;
-            state.quiz.answers = new Array(state.quiz.questions.length).fill(null);
-            document.getElementById('quizQuestions').style.display = 'block';
-            document.getElementById('quizProgress').style.display = 'flex';
-            document.getElementById('quizResults').style.display = 'none';
-            renderQuiz();
-        }
-
-        // Utility functions
-        function formatResponse(text) {
-            return text
-                .replace(/\*\*(.*?)\*\*/g, '<strong style="color: var(--neon-pink)">$1</strong>')
-                .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                .replace(/`(.*?)`/g, '<code style="background: var(--input-bg); padding: 2px 6px; border-radius: 4px;">$1</code>')
-                .replace(/\n/g, '<br>')
-                .replace(/---/g, '<hr style="border: none; border-top: 1px solid var(--glass-border); margin: 15px 0;">');
-        }
-
-        function showOutput(elementId, content, type = 'info') {
-            const output = document.getElementById(elementId);
-            output.className = 'terminal-display visible';
-            if (type === 'error') output.classList.add('error');
-            if (type === 'success') output.classList.add('success');
-            output.innerHTML = content;
-        }
-
-        function saveSettings() {
-            const apiUrl = document.getElementById('apiUrl').value.trim();
-            const studentId = document.getElementById('customStudentId').value.trim();
-
-            if (apiUrl) {
-                CONFIG.apiUrl = apiUrl;
-                localStorage.setItem('tutor_api_url', apiUrl);
-            }
-
-            if (studentId) {
-                const cleanId = studentId.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 50);
-                CONFIG.studentId = cleanId || generateStudentId();
-                localStorage.setItem('tutor_student_id', CONFIG.studentId);
-                document.getElementById('studentIdDisplay').textContent = CONFIG.studentId.slice(0, 12);
-            }
-
-            document.getElementById('statusDot').classList.add('online');
-            document.getElementById('statusDot').classList.remove('offline');
-            document.getElementById('connectionStatus').textContent = 'ONLINE';
-
-            alert('Settings saved successfully!');
-        }
-
-        // Keyboard shortcuts
-        document.getElementById('question').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) askTutor();
-        });
-    </script>
-</body>
-</html>
