@@ -1306,9 +1306,57 @@
                         meta: { subject: data.subject, timestamp: new Date().toISOString() }
                     };
                 } else if (endpoint === 'generate_quiz') {
+                    // Generate demo quiz questions based on count and subject
+                    const count = data.count || 5;
+                    const subject = data.subject || 'General';
+                    const demoQuestions = [];
+                    
+                    const questionTemplates = {
+                        Maths: [
+                            {q: "What is 15% of 200?", opts: ["25", "30", "35", "40"], correct: 1, exp: "15% = 0.15, so 200 × 0.15 = 30"},
+                            {q: "What is the area of a circle with radius 5cm? (Use π = 3.14)", opts: ["31.4 cm²", "78.5 cm²", "157 cm²", "314 cm²"], correct: 1, exp: "Area = πr² = 3.14 × 5² = 78.5 cm²"},
+                            {q: "Solve: 3x + 7 = 22", opts: ["x = 3", "x = 5", "x = 7", "x = 9"], correct: 1, exp: "3x = 22 - 7 = 15, so x = 15 ÷ 3 = 5"},
+                            {q: "What is the mean of: 4, 7, 9, 12, 13?", opts: ["7", "9", "11", "13"], correct: 1, exp: "Mean = (4+7+9+12+13) ÷ 5 = 45 ÷ 5 = 9"},
+                            {q: "Expand: (x + 3)(x + 5)", opts: ["x² + 8x + 15", "x² + 15x + 8", "x² + 8x + 8", "x² + 15"], correct: 0, exp: "FOIL: x² + 5x + 3x + 15 = x² + 8x + 15"}
+                        ],
+                        Science: [
+                            {q: "What is photosynthesis?", opts: ["Respiration in plants", "Plants making food using light", "Plants absorbing water", "Plants releasing oxygen"], correct: 1, exp: "Photosynthesis is the process where plants use sunlight to convert CO₂ and water into glucose and oxygen."},
+                            {q: "What is the chemical formula for water?", opts: ["H₂O", "CO₂", "O₂", "NaCl"], correct: 0, exp: "Water consists of 2 hydrogen atoms and 1 oxygen atom: H₂O"},
+                            {q: "Which organelle is the powerhouse of the cell?", opts: ["Nucleus", "Ribosome", "Mitochondria", "Chloroplast"], correct: 2, exp: "Mitochondria produce ATP through cellular respiration."},
+                            {q: "What is the charge of a proton?", opts: ["Positive", "Negative", "Neutral", "Variable"], correct: 0, exp: "Protons have a positive charge, neutrons are neutral, electrons are negative."},
+                            {q: "What pH value indicates a neutral solution?", opts: ["0", "7", "14", "10"], correct: 1, exp: "pH 7 is neutral. Below 7 is acidic, above 7 is alkaline."}
+                        ],
+                        Biology: [
+                            {q: "What are the building blocks of proteins?", opts: ["Nucleotides", "Amino acids", "Glucose molecules", "Fatty acids"], correct: 1, exp: "Proteins are polymers made of amino acid monomers."},
+                            {q: "Where does gaseous exchange occur in humans?", opts: ["Heart", "Kidneys", "Alveoli", "Liver"], correct: 2, exp: "Alveoli in the lungs have a large surface area for efficient gas exchange."},
+                            {q: "What is the function of red blood cells?", opts: ["Fighting infection", "Carrying oxygen", "Clotting blood", "Producing hormones"], correct: 1, exp: "Red blood cells contain haemoglobin which binds to oxygen."},
+                            {q: "What type of organism is yeast?", opts: ["Bacteria", "Virus", "Fungus", "Protist"], correct: 2, exp: "Yeast is a single-celled fungus used in brewing and baking."},
+                            {q: "What is mitosis?", opts: ["Cell death", "Cell division producing identical cells", "Cell differentiation", "Cell respiration"], correct: 1, exp: "Mitosis produces two genetically identical daughter cells for growth and repair."}
+                        ],
+                        English: [
+                            {q: "What is a metaphor?", opts: ["A direct comparison using 'like' or 'as'", "An indirect comparison", "Exaggeration for effect", "Giving human qualities to objects"], correct: 1, exp: "A metaphor directly states one thing is another, e.g., 'Time is money'."},
+                            {q: "What is alliteration?", opts: ["Repetition of vowel sounds", "Repetition of consonant sounds at the start of words", "Words that sound like their meaning", "Opposite meanings together"], correct: 1, exp: "Alliteration repeats consonants: 'Peter Piper picked a peck'."},
+                            {q: "What is the main theme of 'Macbeth'?", opts: ["Love and romance", "Ambition and power", "Friendship", "Nature"], correct: 1, exp: "Macbeth explores the corrupting nature of unchecked ambition."},
+                            {q: "What is iambic pentameter?", opts: ["10 syllables per line", "5 stressed beats per line", "Rhyming couplets", "Free verse"], correct: 1, exp: "Iambic pentameter has 5 iambic feet (unstressed-stressed pairs) per line."},
+                            {q: "What is an oxymoron?", opts: ["A long speech", "Contradictory terms together", "A question without answer", "Repetition of structure"], correct: 1, exp: "Oxymorons combine opposites: 'bitter sweet', 'deafening silence'."}
+                        ]
+                    };
+                    
+                    const templates = questionTemplates[subject] || questionTemplates.Maths;
+                    
+                    for (let i = 0; i < count && i < templates.length; i++) {
+                        const t = templates[i % templates.length];
+                        demoQuestions.push({
+                            question: t.q,
+                            options: t.opts.map((opt, idx) => `${String.fromCharCode(65 + idx)}) ${opt}`),
+                            correct: t.correct,
+                            explanation: `[DEMO MODE] ${t.exp}`
+                        });
+                    }
+                    
                     return {
                         success: true,
-                        answer: `Q1: Which of the following is the capital of France?\nA) London\nB) Paris\nC) Berlin\nD) Madrid\nCorrect: B\nExplanation: Paris is the capital and largest city of France.\n\nQ2: What is 2 + 2?\nA) 3\nB) 4\nC) 5\nD) 6\nCorrect: B\nExplanation: Basic arithmetic: 2 + 2 equals 4.`
+                        answer: JSON.stringify({ questions: demoQuestions })
                     };
                 } else if (endpoint === 'get_history') {
                     return {
@@ -1597,21 +1645,33 @@
             btnText.innerHTML = '<div class="spinner"></div> GENERATING...';
             showOutput('quizOutput', '<span style="color: var(--neon-blue)">[QUIZ_ENGINE] Generating questions...</span>', 'loading');
             
-            const quizPrompt = `Create ${count} GCSE ${subject} multiple choice questions${topic ? ` about "${topic}"` : ''}. Difficulty: ${state.quiz.difficulty} tier.
+            const difficultyDesc = {
+                easy: 'basic recall and understanding questions suitable for foundation tier',
+                medium: 'application and analysis questions suitable for crossover grades 4-6',
+                hard: 'evaluation and synthesis questions suitable for higher tier grades 7-9'
+            };
+            
+            const quizPrompt = `Generate exactly ${count} GCSE ${subject} multiple choice quiz questions${topic ? ` about "${topic}"` : ''}.
+Difficulty: ${state.quiz.difficulty} (${difficultyDesc[state.quiz.difficulty]})
 
-Format each question EXACTLY like this:
+IMPORTANT: Respond ONLY with valid JSON, no markdown, no explanation. Use this exact format:
+{
+  "questions": [
+    {
+      "question": "Question text here?",
+      "options": ["A) First option", "B) Second option", "C) Third option", "D) Fourth option"],
+      "correct": 0,
+      "explanation": "Brief explanation of why the answer is correct and common misconceptions."
+    }
+  ]
+}
 
-Q1: [Question text]?
-A) [Option 1]
-B) [Option 2]
-C) [Option 3]
-D) [Option 4]
-Correct: [A/B/C/D]
-Explanation: [Why the correct answer is right and why others are wrong]
-
-Q2: [Next question...]
-
-Make questions exam-appropriate for UK GCSE.`;
+Rules:
+- Each question must have exactly 4 options labeled A) B) C) D)
+- "correct" is the index (0-3) of the correct answer
+- Make questions exam-style and appropriate for UK GCSE
+- Include a mix of question types (recall, application, analysis)
+- Explanations should mention mark scheme points where relevant`;
             
             try {
                 const data = await apiCall('generate_quiz', {
@@ -1625,8 +1685,17 @@ Make questions exam-appropriate for UK GCSE.`;
                 if (data.success && data.answer) {
                     let quizData;
                     try {
-                        quizData = parseQuizFromText(data.answer, count);
-                        if (!quizData.questions || quizData.questions.length === 0) {
+                        // Try to extract JSON from the response
+                        const jsonMatch = data.answer.match(/\{[\s\S]*\}/);
+                        if (jsonMatch) {
+                            quizData = JSON.parse(jsonMatch[0]);
+                        } else {
+                            // Fallback to text parsing if JSON not found
+                            console.warn('JSON not found, trying text parse');
+                            quizData = parseQuizFromText(data.answer, count);
+                        }
+                        
+                        if (!quizData.questions || !Array.isArray(quizData.questions) || quizData.questions.length === 0) {
                             throw new Error('No valid questions found. Try being more specific with your topic.');
                         }
                     } catch (parseErr) {
