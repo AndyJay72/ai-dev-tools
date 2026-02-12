@@ -1126,7 +1126,14 @@
     <script>
         // Configuration
         const CONFIG = {
-            apiBaseUrl: 'https://n8n.srv1090894.hstgr.cloud/webhook',
+            // Base n8n webhook URL (update this to your n8n instance)
+            n8nBaseUrl: 'https://n8n.srv1090894.hstgr.cloud',
+            endpoints: {
+                tutor: '/webhook/tutor-chat',
+                lessons: '/webhook/lessons',
+                homework: '/webhook/homework',
+                profile: '/webhook/student-profile'
+            },
             authToken: null,
             userId: null,
             studentId: null
@@ -1185,6 +1192,12 @@
             CONFIG.authToken = token;
             CONFIG.userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
             
+            // Load custom n8n URL if saved
+            const savedUrl = localStorage.getItem('tutor_n8n_url');
+            if (savedUrl) {
+                CONFIG.n8nBaseUrl = savedUrl;
+            }
+            
             // Demo mode - use local data instead of API calls
             if (isDemoMode) {
                 console.log('Running in DEMO MODE - no backend required');
@@ -1215,7 +1228,7 @@
                 }
             }
             
-            document.getElementById('apiUrl').value = CONFIG.apiBaseUrl;
+            document.getElementById('apiUrl').value = CONFIG.n8nBaseUrl;
             
             applyTheme(state.theme);
             renderSubjectGrid();
@@ -1244,7 +1257,7 @@
         // Load student profile from database
         async function loadStudentProfile() {
             try {
-                const response = await apiCall('/tutor', {
+                const response = await apiCall(CONFIG.endpoints.profile, {
                     action: 'get_student_profile',
                     user_id: CONFIG.userId
                 });
@@ -1267,6 +1280,28 @@
                 console.error('Failed to load student profile:', err);
                 // Use cached data or defaults
                 document.getElementById('studentIdDisplay').textContent = 'STUDENT';
+            }
+        }
+        
+        // Load dashboard statistics
+        async function loadDashboardStats() {
+            try {
+                const response = await apiCall(CONFIG.endpoints.tutor, {
+                    action: 'get_dashboard_stats',
+                    user_id: CONFIG.userId
+                });
+                
+                if (response.success && response.stats) {
+                    state.subjects = response.stats.subjects || [];
+                    state.achievements = response.stats.achievements || [];
+                }
+            } catch (err) {
+                console.error('Failed to load dashboard stats:', err);
+            }
+        }
+        
+        // Generic API call helper with auth
+        async function apiCall(endpoint, data) {
             // Check if in demo mode
             const isDemoMode = sessionStorage.getItem('isDemoMode') === 'true';
             
@@ -1299,35 +1334,15 @@
             }
             
             // Real API call
-            }
-        }
-        
-        // Load dashboard statistics
-        async function loadDashboardStats() {
-            try {
-                const response = await apiCall('/tutor', {
-                    action: 'get_dashboard_stats',
-                    user_id: CONFIG.userId
-                });
-                
-                if (response.success && response.stats) {
-                    state.subjects = response.stats.subjects || [];
-                    state.achievements = response.stats.achievements || [];
-                }
-            } catch (err) {
-                console.error('Failed to load dashboard stats:', err);
-            }
-        }
-        
-        // Generic API call helper with auth
-        async function apiCall(endpoint, data) {
-            const url = CONFIG.apiBaseUrl + endpoint;
+            const url = CONFIG.n8nBaseUrl + endpoint;
             const response = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${CONFIG.authToken}`
                 },
+                mode: 'cors', // Enable CORS
+                credentials: 'omit', // Don't send cookies
                 body: JSON.stringify({
                     user_id: CONFIG.userId,
                     student_id: CONFIG.studentId,
@@ -1434,7 +1449,7 @@
 
         async function loadHistory() {
             try {
-                const data = await apiCall('/tutor', {
+                const data = await apiCall(CONFIG.endpoints.tutor, {
                     action: 'get_history',
                     user_id: CONFIG.userId,
                     limit: 20
@@ -1485,7 +1500,7 @@
             showOutput('responseOutput', '<span style="color: var(--neon-blue)">[NEURAL_LINK] Establishing secure connection...</span>', 'loading');
             
             try {
-                const data = await apiCall('/tutor', {
+                const data = await apiCall(CONFIG.endpoints.tutor, {
                     action: 'ask_question',
                     question,
                     subject,
@@ -1525,15 +1540,15 @@
                 
                 if (err.message === 'Session expired') {
                     errorMsg = 'Your session has expired. Please log in again.';
-                } else if (err.message.includes('Failed to fetch')) {
-                    errorMsg = 'Cannot connect to server. Check your network connection.';
+                } else if (err.message.includes('Failed to fetch') || err.name === 'TypeError') {
+                    errorMsg = 'Cannot connect to n8n server. CORS issue detected.\n\n📋 Fix in n8n:\n1. Add HTTP Response node to your workflow\n2. Set these headers:\n   • Access-Control-Allow-Origin: *\n   • Access-Control-Allow-Methods: POST, OPTIONS\n   • Access-Control-Allow-Headers: Content-Type, Authorization\n\nOr use Demo Mode for testing.';
                 } else if (err.message.includes('HTTP 404')) {
                     errorMsg = 'Webhook not found. Verify your n8n workflow is activated.';
                 } else if (err.message.includes('HTTP 500')) {
                     errorMsg = 'Server error. Check n8n workflow execution logs.';
                 }
                 
-                showOutput('responseOutput', `<span style="color: var(--neon-pink)">[ERROR] ${errorMsg}</span>`, 'error');
+                showOutput('responseOutput', `<span style="color: var(--neon-pink)">[ERROR] ${errorMsg.replace(/\n/g, '<br>')}</span>`, 'error');
                 
                 document.getElementById('statusDot').classList.remove('online');
                 document.getElementById('statusDot').classList.add('offline');
@@ -1621,7 +1636,7 @@ Q2: [Next question...]
 Make questions exam-appropriate for UK GCSE.`;
             
             try {
-                const data = await apiCall('/tutor', {
+                const data = await apiCall(CONFIG.endpoints.tutor, {
                     action: 'generate_quiz',
                     question: quizPrompt,
                     subject,
@@ -1850,7 +1865,7 @@ Make questions exam-appropriate for UK GCSE.`;
             grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);"><div class="spinner"></div> Loading lessons...</div>';
             
             try {
-                const response = await apiCall('/lessons', {
+                const response = await apiCall(CONFIG.endpoints.lessons, {
                     action: 'list',
                     subject: subject || undefined
                 });
@@ -1884,7 +1899,7 @@ Make questions exam-appropriate for UK GCSE.`;
             document.getElementById('lessonContent').innerHTML = '<div class="spinner"></div> Loading lesson...';
             
             try {
-                const response = await apiCall('/lessons', {
+                const response = await apiCall(CONFIG.endpoints.lessons, {
                     action: 'get',
                     lesson_id: lessonId
                 });
@@ -2002,7 +2017,7 @@ Make questions exam-appropriate for UK GCSE.`;
             list.innerHTML = '<div style="text-align: center; padding: 20px;"><div class="spinner"></div> Loading homework...</div>';
             
             try {
-                const response = await apiCall('/homework', {
+                const response = await apiCall(CONFIG.endpoints.homework, {
                     action: 'list'
                 });
 
@@ -2043,7 +2058,7 @@ Make questions exam-appropriate for UK GCSE.`;
             document.getElementById('homeworkQuestions').innerHTML = '<div style="text-align: center;"><div class="spinner"></div> Loading questions...</div>';
             
             try {
-                const response = await apiCall('/homework', {
+                const response = await apiCall(CONFIG.endpoints.homework, {
                     action: 'get',
                     homework_id: homeworkId
                 });
@@ -2142,7 +2157,7 @@ Make questions exam-appropriate for UK GCSE.`;
             btnText.innerHTML = '<div class="spinner"></div> SUBMITTING...';
 
             try {
-                const response = await apiCall('/homework', {
+                const response = await apiCall(CONFIG.endpoints.homework, {
                     action: 'submit',
                     homework_id: hw.homework_id,
                     answers: answers
@@ -2227,11 +2242,11 @@ Make questions exam-appropriate for UK GCSE.`;
             const apiUrl = document.getElementById('apiUrl').value.trim();
             
             if (apiUrl) {
-                CONFIG.apiBaseUrl = apiUrl;
-                localStorage.setItem('tutor_api_url', apiUrl);
+                CONFIG.n8nBaseUrl = apiUrl;
+                localStorage.setItem('tutor_n8n_url', apiUrl);
             }
 
-            alert('✅ Settings saved!');
+            alert('✅ Settings saved! Refresh the page for changes to take effect.');
         }
 
         function escapeHtml(unsafe) {
