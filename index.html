@@ -382,10 +382,11 @@ var(--glass-border);
     <script>
         // Configuration
         const CONFIG = {
-            apiBaseUrl: 'https://n8n.srv1090894.hstgr.cloud/webhook/auth',
+            // Base n8n webhook URL (update this to your n8n instance)
+            n8nBaseUrl: 'https://n8n.srv1090894.hstgr.cloud',
             endpoints: {
-                login: '/auth/login',
-                register: '/auth/register'
+                login: '/webhook/auth-login',
+                register: '/webhook/auth-register'
             }
         };
 
@@ -430,11 +431,13 @@ var(--glass-border);
             setLoading(true);
             
             try {
-                const response = await fetch(`${CONFIG.apiBaseUrl}${CONFIG.endpoints.login}`, {
+                const response = await fetch(`${CONFIG.n8nBaseUrl}${CONFIG.endpoints.login}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
+                    mode: 'cors', // Enable CORS
+                    credentials: 'omit', // Don't send cookies
                     body: JSON.stringify({ email, password })
                 });
 
@@ -464,7 +467,13 @@ var(--glass-border);
                 window.location.href = 'dashboard.html';
             } catch (error) {
                 console.error('Login error:', error);
-                showError(error.message || 'Failed to login. Please check your credentials.');
+                
+                // Handle CORS errors specifically
+                if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
+                    showError('Cannot connect to server. Possible CORS issue. Please ensure n8n webhook has CORS headers enabled, or use Demo Mode.');
+                } else {
+                    showError(error.message || 'Failed to login. Please check your credentials.');
+                }
                 setLoading(false);
             }
         }
@@ -501,11 +510,11 @@ var(--glass-border);
             sessionStorage.setItem('studentId', '999');
             sessionStorage.setItem('userEmail', 'demo@virtualtutor.local');
             sessionStorage.setItem('isDemoMode', 'true');
-           Don't auto-fill - let users choose demo mode or real login
-        // window.addEventListener('load', () => {
-        //     emailInput.value = 'admin@virtualtutor.edu';
-        //     passwordInput.value = 'Admin123!';
-        //
+            
+            // Redirect to dashboard
+            window.location.href = 'dashboard.html';
+        });
+        
         // Register link (placeholder)
         registerLink.addEventListener('click', (e) => {
             e.preventDefault();
