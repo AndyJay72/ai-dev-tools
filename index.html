@@ -419,8 +419,8 @@
             // Base n8n webhook URL (update this to your n8n instance)
             n8nBaseUrl: 'https://n8n.srv1090894.hstgr.cloud',
             endpoints: {
-                login: '/webhook/auth-login',
-                register: '/webhook/auth-register'
+                login: '/webhook/auth',
+                register: '/webhook/auth'
             }
         };
 
@@ -472,7 +472,11 @@
                     },
                     mode: 'cors', // Enable CORS
                     credentials: 'omit', // Don't send cookies
-                    body: JSON.stringify({ email, password })
+                    body: JSON.stringify({ 
+                        action: 'login',
+                        email, 
+                        password 
+                    })
                 });
 
                 const data = await response.json();
@@ -487,14 +491,11 @@
                 if (data.refresh_token) {
                     storage.setItem('refreshToken', data.refresh_token);
                 }
-                if (data.user_id) {
-                    storage.setItem('userId', data.user_id);
-                }
-                if (data.student_id) {
-                    storage.setItem('studentId', data.student_id);
-                }
-                if (data.email) {
-                    storage.setItem('userEmail', data.email);
+                // Handle nested user object from n8n workflow
+                if (data.user) {
+                    storage.setItem('userId', data.user.userId);
+                    storage.setItem('studentId', data.user.studentId);
+                    storage.setItem('userEmail', data.user.email);
                 }
 
                 // Redirect to dashboard
@@ -562,4 +563,3 @@
         });
     </script>
 </body>
-</html>
