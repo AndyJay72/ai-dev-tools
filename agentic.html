@@ -1101,8 +1101,8 @@
             <section id="view-settings" class="view-section">
                 <label>API Configuration</label>
                 <div class="control-group">
-                    <label style="font-size: 0.6rem;">Webhook URL</label>
-                    <input type="text" id="apiUrl" value="https://n8n.srv1090894.hstgr.cloud/webhook" placeholder="https://n8n.srv1090894.hstgr.cloud/webhook/tutor">
+                    <label style="font-size: 0.6rem;">n8n Webhook URL</label>
+                    <input type="text" id="apiUrl" value="https://n8n.srv1090894.hstgr.cloud/webhook/tutor" placeholder="Your n8n webhook URL">
                 </div>
                 <div class="control-group">
                     <label style="font-size: 0.6rem;">Student Name</label>
@@ -1126,14 +1126,8 @@
     <script>
         // Configuration
         const CONFIG = {
-            // Base n8n webhook URL (update this to your n8n instance)
-            n8nBaseUrl: 'https://n8n.srv1090894.hstgr.cloud',
-            endpoints: {
-                tutor: '/webhook/tutor-chat',
-                lessons: '/webhook/lessons',
-                homework: '/webhook/homework',
-                profile: '/webhook/student-profile'
-            },
+            // API URL - matches working beta.html pattern
+            apiUrl: localStorage.getItem('tutor_api_url') || 'https://n8n.srv1090894.hstgr.cloud/webhook/tutor',
             authToken: null,
             userId: null,
             studentId: null
@@ -1192,11 +1186,14 @@
             CONFIG.authToken = token;
             CONFIG.userId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
             
-            // Load custom n8n URL if saved
-            const savedUrl = localStorage.getItem('tutor_n8n_url');
+            // Load saved API URL
+            const savedUrl = localStorage.getItem('tutor_api_url');
             if (savedUrl) {
-                CONFIG.n8nBaseUrl = savedUrl;
+                CONFIG.apiUrl = savedUrl;
             }
+            
+            // Populate settings form
+            document.getElementById('apiUrl').value = CONFIG.apiUrl;
             
             // Demo mode - use local data instead of API calls
             if (isDemoMode) {
@@ -1228,8 +1225,6 @@
                 }
             }
             
-            document.getElementById('apiUrl').value = CONFIG.n8nBaseUrl;
-            
             applyTheme(state.theme);
             renderSubjectGrid();
         });
@@ -1257,10 +1252,7 @@
         // Load student profile from database
         async function loadStudentProfile() {
             try {
-                const response = await apiCall(CONFIG.endpoints.profile, {
-                    action: 'get_student_profile',
-                    user_id: CONFIG.userId
-                });
+                const response = await apiCall('get_student_profile', {});
                 
                 if (response.success && response.student) {
                     state.student = response.student;
@@ -1286,10 +1278,7 @@
         // Load dashboard statistics
         async function loadDashboardStats() {
             try {
-                const response = await apiCall(CONFIG.endpoints.tutor, {
-                    action: 'get_dashboard_stats',
-                    user_id: CONFIG.userId
-                });
+                const response = await apiCall('get_dashboard_stats', {});
                 
                 if (response.success && response.stats) {
                     state.subjects = response.stats.subjects || [];
@@ -1309,19 +1298,19 @@
                 // Simulate API response in demo mode
                 console.log('DEMO MODE API Call:', endpoint, data);
                 
-                // Return mock responses
-                if (data.action === 'ask_question') {
+                // Return mock responses based on endpoint
+                if (endpoint === 'ask_question') {
                     return {
                         success: true,
                         answer: `**[DEMO MODE]** This is a simulated answer to your question about ${data.subject}.\n\nIn demo mode, the AI tutor is not connected. To use real AI responses:\n1. Set up your n8n workflows\n2. Configure PostgreSQL database\n3. Login with real credentials\n\nFor now, explore the interface and see how everything works!`,
                         meta: { subject: data.subject, timestamp: new Date().toISOString() }
                     };
-                } else if (data.action === 'generate_quiz') {
+                } else if (endpoint === 'generate_quiz') {
                     return {
                         success: true,
                         answer: `Q1: Which of the following is the capital of France?\nA) London\nB) Paris\nC) Berlin\nD) Madrid\nCorrect: B\nExplanation: Paris is the capital and largest city of France.\n\nQ2: What is 2 + 2?\nA) 3\nB) 4\nC) 5\nD) 6\nCorrect: B\nExplanation: Basic arithmetic: 2 + 2 equals 4.`
                     };
-                } else if (data.action === 'get_history') {
+                } else if (endpoint === 'get_history') {
                     return {
                         success: true,
                         history: [
@@ -1333,22 +1322,15 @@
                 return { success: true, message: 'Demo mode - feature not available' };
             }
             
-            // Real API call
-            const url = CONFIG.n8nBaseUrl + endpoint;
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${CONFIG.authToken}`
-                },
-                mode: 'cors', // Enable CORS
-                credentials: 'omit', // Don't send cookies
-                body: JSON.stringify({
-                    user_id: CONFIG.userId,
-                    student_id: CONFIG.studentId,
-                    ...data
-                })
-            });
+            // Real API call - use GET with query params like beta.html (avoids CORS preflight)
+            const payload = {
+                studentId: CONFIG.studentId || 'guest',
+                userId: CONFIG.userId,
+                action: endpoint,
+                ...data
+            };
+            const url = `${CONFIG.apiUrl}?data=${encodeURIComponent(JSON.stringify(payload))}`;
+            const response = await fetch(url);
             
             if (response.status === 401) {
                 // Token expired, redirect to login
@@ -1449,9 +1431,7 @@
 
         async function loadHistory() {
             try {
-                const data = await apiCall(CONFIG.endpoints.tutor, {
-                    action: 'get_history',
-                    user_id: CONFIG.userId,
+                const data = await apiCall('get_history', {
                     limit: 20
                 });
                 
@@ -1500,11 +1480,9 @@
             showOutput('responseOutput', '<span style="color: var(--neon-blue)">[NEURAL_LINK] Establishing secure connection...</span>', 'loading');
             
             try {
-                const data = await apiCall(CONFIG.endpoints.tutor, {
-                    action: 'ask_question',
+                const data = await apiCall('ask_question', {
                     question,
-                    subject,
-                    student_id: CONFIG.studentId
+                    subject
                 });
 
                 if (data.success && data.answer) {
@@ -1636,14 +1614,12 @@ Q2: [Next question...]
 Make questions exam-appropriate for UK GCSE.`;
             
             try {
-                const data = await apiCall(CONFIG.endpoints.tutor, {
-                    action: 'generate_quiz',
+                const data = await apiCall('generate_quiz', {
                     question: quizPrompt,
                     subject,
                     count,
                     difficulty: state.quiz.difficulty,
-                    topic: topic || null,
-                    student_id: CONFIG.studentId
+                    topic: topic || null
                 });
 
                 if (data.success && data.answer) {
@@ -1806,30 +1782,6 @@ Make questions exam-appropriate for UK GCSE.`;
             state.quiz = {
                 questions: [],
                 currentIndex: 0,
-            // Check demo mode
-            const isDemoMode = sessionStorage.getItem('isDemoMode') === 'true';
-            
-            if (isDemoMode) {
-                // Show demo lessons
-                grid.innerHTML = `
-                    <div class="mastery-node" onclick="alert('Demo lesson - In real mode, this would load full lesson content from the database')" style="cursor: pointer; padding: 20px;">
-                        <div class="mastery-icon">📐</div>
-                        <div class="mastery-name" style="font-size: 0.85rem; margin: 10px 0;">Quadratic Equations (Demo)</div>
-                        <div style="font-size: 0.65rem; color: var(--text-secondary); margin-top: 5px;">
-                            Maths • Medium<br>30 mins
-                        </div>
-                    </div>
-                    <div class="mastery-node" onclick="alert('Demo lesson - In real mode, this would load full lesson content from the database')" style="cursor: pointer; padding: 20px;">
-                        <div class="mastery-icon">🧬</div>
-                        <div class="mastery-name" style="font-size: 0.85rem; margin: 10px 0;">Cell Structure (Demo)</div>
-                        <div style="font-size: 0.65rem; color: var(--text-secondary); margin-top: 5px;">
-                            Biology • Easy<br>25 mins
-                        </div>
-                    </div>
-                `;
-                return;
-            }
-            
                 answers: [],
                 difficulty: state.quiz.difficulty,
                 subject: 'Maths',
@@ -1862,11 +1814,34 @@ Make questions exam-appropriate for UK GCSE.`;
             const subject = document.getElementById('lessonSubjectFilter').value;
             const grid = document.getElementById('lessonsGrid');
             
+            // Check demo mode
+            const isDemoMode = sessionStorage.getItem('isDemoMode') === 'true';
+            
+            if (isDemoMode) {
+                // Show demo lessons
+                grid.innerHTML = `
+                    <div class="mastery-node" onclick="alert('Demo lesson - In real mode, this would load full lesson content from the database')" style="cursor: pointer; padding: 20px;">
+                        <div class="mastery-icon">📐</div>
+                        <div class="mastery-name" style="font-size: 0.85rem; margin: 10px 0;">Quadratic Equations (Demo)</div>
+                        <div style="font-size: 0.65rem; color: var(--text-secondary); margin-top: 5px;">
+                            Maths • Medium<br>30 mins
+                        </div>
+                    </div>
+                    <div class="mastery-node" onclick="alert('Demo lesson - In real mode, this would load full lesson content from the database')" style="cursor: pointer; padding: 20px;">
+                        <div class="mastery-icon">🧬</div>
+                        <div class="mastery-name" style="font-size: 0.85rem; margin: 10px 0;">Cell Structure (Demo)</div>
+                        <div style="font-size: 0.65rem; color: var(--text-secondary); margin-top: 5px;">
+                            Biology • Easy<br>25 mins
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
             grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);"><div class="spinner"></div> Loading lessons...</div>';
             
             try {
-                const response = await apiCall(CONFIG.endpoints.lessons, {
-                    action: 'list',
+                const response = await apiCall('list_lessons', {
                     subject: subject || undefined
                 });
 
@@ -1899,8 +1874,7 @@ Make questions exam-appropriate for UK GCSE.`;
             document.getElementById('lessonContent').innerHTML = '<div class="spinner"></div> Loading lesson...';
             
             try {
-                const response = await apiCall(CONFIG.endpoints.lessons, {
-                    action: 'get',
+                const response = await apiCall('get_lesson', {
                     lesson_id: lessonId
                 });
 
@@ -2017,9 +1991,7 @@ Make questions exam-appropriate for UK GCSE.`;
             list.innerHTML = '<div style="text-align: center; padding: 20px;"><div class="spinner"></div> Loading homework...</div>';
             
             try {
-                const response = await apiCall(CONFIG.endpoints.homework, {
-                    action: 'list'
-                });
+                const response = await apiCall('list_homework', {});
 
                 homeworkState.assignments = response.assignments || [];
 
@@ -2058,8 +2030,7 @@ Make questions exam-appropriate for UK GCSE.`;
             document.getElementById('homeworkQuestions').innerHTML = '<div style="text-align: center;"><div class="spinner"></div> Loading questions...</div>';
             
             try {
-                const response = await apiCall(CONFIG.endpoints.homework, {
-                    action: 'get',
+                const response = await apiCall('get_homework', {
                     homework_id: homeworkId
                 });
 
@@ -2157,8 +2128,7 @@ Make questions exam-appropriate for UK GCSE.`;
             btnText.innerHTML = '<div class="spinner"></div> SUBMITTING...';
 
             try {
-                const response = await apiCall(CONFIG.endpoints.homework, {
-                    action: 'submit',
+                const response = await apiCall('submit_homework', {
                     homework_id: hw.homework_id,
                     answers: answers
                 });
@@ -2242,8 +2212,8 @@ Make questions exam-appropriate for UK GCSE.`;
             const apiUrl = document.getElementById('apiUrl').value.trim();
             
             if (apiUrl) {
-                CONFIG.n8nBaseUrl = apiUrl;
-                localStorage.setItem('tutor_n8n_url', apiUrl);
+                CONFIG.apiUrl = apiUrl;
+                localStorage.setItem('tutor_api_url', apiUrl);
             }
 
             alert('✅ Settings saved! Refresh the page for changes to take effect.');
