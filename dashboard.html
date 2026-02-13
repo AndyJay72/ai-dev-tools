@@ -1126,8 +1126,12 @@
     <script>
         // Configuration
         const CONFIG = {
-            // API URL - matches working beta.html pattern
+            // Legacy API for Ask Tutor (kept for backward compatibility)
             apiUrl: localStorage.getItem('tutor_api_url') || 'https://n8n.srv1090894.hstgr.cloud/webhook/tutor',
+            // New workflow APIs
+            lessonApi: localStorage.getItem('lesson_api_url') || 'https://n8n.srv1090894.hstgr.cloud/webhook/lesson',
+            practiceApi: localStorage.getItem('practice_api_url') || 'https://n8n.srv1090894.hstgr.cloud/webhook/practice',
+            progressApi: localStorage.getItem('progress_api_url') || 'https://n8n.srv1090894.hstgr.cloud/webhook/progress',
             authToken: null,
             userId: null,
             studentId: null
@@ -1425,6 +1429,45 @@
             
             if (response.status === 401) {
                 // Token expired, redirect to login
+                logout();
+                throw new Error('Session expired');
+            }
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            return await response.json();
+        }
+
+        // New API helper for the three workflows (lessons, practice, progress)
+        async function callWorkflowApi(workflowType, action, data = {}) {
+            // Demo mode fallback
+            if (sessionStorage.getItem('isDemoMode') === 'true') {
+                console.log('DEMO MODE: Simulating', workflowType, 'API call:', action, data);
+                return { success: true, message: 'Demo mode - feature not available' };
+            }
+            
+            // Select the appropriate API endpoint
+            let apiUrl;
+            switch(workflowType) {
+                case 'lesson': apiUrl = CONFIG.lessonApi; break;
+                case 'practice': apiUrl = CONFIG.practiceApi; break;
+                case 'progress': apiUrl = CONFIG.progressApi; break;
+                default: throw new Error('Unknown workflow type: ' + workflowType);
+            }
+            
+            // Build request payload
+            const payload = {
+                action: action,
+                studentId: CONFIG.studentId || 999,
+                ...data
+            };
+            
+            const url = `${apiUrl}?data=${encodeURIComponent(JSON.stringify(payload))}`;
+            const response = await fetch(url);
+            
+            if (response.status === 401) {
                 logout();
                 throw new Error('Session expired');
             }
@@ -1922,8 +1965,192 @@ Rules:
             currentLesson: null
         };
 
+        async function viewTopicLessons(topicId, topicName) {
+            const list = document.getElementById('lessonsList');
+            list.innerHTML = `<div class="loading-pulse">⚡ Loading ${topicName} lessons...</div>`;
+            
+            try {
+                const response = await callWorkflowApi('lesson', 'get_lessons_by_topic', { topicId });
+                
+                if (response.success && response.lessons && response.lessons.length > 0) {
+                    list.innerHTML = `
+                        <button class="btn-secondary" onclick="loadLessons()" style="margin-bottom: 20px;">
+                            <i class="fas fa-arrow-left"></i> Back to Topics
+                        </button>
+                        <h3 style="color: var(--neon-pink); font-family: 'Orbitron'; margin-bottom: 20px;">${escapeHtml(topicName)}</h3>
+                        ${response.lessons.map(lesson => `
+                            <div class="lesson-card" onclick="viewLessonDetail(${lesson.id}, '${escapeHtml(lesson.title)}')">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div style="flex: 1;">
+                                        <strong style="color: var(--neon-blue);">${lesson.number}. ${escapeHtml(lesson.title)}</strong><br>
+                                        <small style="color: var(--text-secondary);">
+                                            ${lesson.type.replace(/_/g, ' ').toUpperCase()} • 
+                                            ${lesson.estimatedMinutes} min • 
+                                            Difficulty: ${'⭐'.repeat(lesson.difficultyRating || 1)}
+                                        </small>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        ${lesson.progress.status === 'completed' 
+                                            ? '<div class="status-badge completed">✓ Complete</div>' 
+                                            : lesson.progress.status === 'in_progress' 
+                                            ? `<div class="status-badge pending">${lesson.progress.completionPercentage}%</div>` 
+                                            : '<div class="status-badge">Not Started</div>'}
+                                        ${lesson.progress.confidenceRating ? `<div style="margin-top: 5px; color: var(--neon-green); font-size: 0.8rem;">Confidence: ${'★'.repeat(lesson.progress.confidenceRating)}${'☆'.repeat(5 - lesson.progress.confidenceRating)}</div>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    `;
+                } else {
+                    list.innerHTML = `
+                        <button class="btn-secondary" onclick="loadLessons()" style="margin-bottom: 20px;">
+                            <i class="fas fa-arrow-left"></i> Back to Topics
+                        </button>
+                        <div class="terminal-display error">
+                            <strong>No lessons available for this topic</strong><br><br>
+                            Lessons are being added regularly.
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                console.error('Failed to load topic lessons:', err);
+                list.innerHTML = `<div class="terminal-display error">⚠️ Failed to load lessons: ${escapeHtml(err.message)}</div>`;
+            }
+        }
+
+        async function viewLessonDetail(lessonId, lessonTitle) {
+            const list = document.getElementById('lessonsList');
+            list.innerHTML = `<div class="loading-pulse">⚡ Loading ${lessonTitle}...</div>`;
+            
+            try {
+                const response = await callWorkflowApi('lesson', 'get_lesson', { lessonId });
+                
+                if (response.success && response.lesson) {
+                    const lesson = response.lesson;
+                    const progress = response.progress;
+                    
+                    list.innerHTML = `
+                        <button class="btn-secondary" onclick="loadLessons()" style="margin-bottom: 20px;">
+                            <i class="fas fa-arrow-left"></i> Back to Lessons
+                        </button>
+                        
+                        <div class="terminal-display" style="border-left-color: var(--neon-blue); margin-bottom: 20px;">
+                            <h2 style="color: var(--neon-pink); font-family: 'Orbitron'; margin-bottom: 10px;">${escapeHtml(lesson.title)}</h2>
+                            <div style="color: var(--text-secondary); margin-bottom: 15px;">
+                                ${lesson.subject.name} • ${lesson.topic.name} • ${lesson.estimatedMinutes} min
+                            </div>
+                            
+                            <h4 style="color: var(--neon-blue); margin-top: 20px;">📋 Learning Objectives</h4>
+                            <ul style="margin-left: 20px; color: var(--text-secondary);">
+                                ${(lesson.learningObjectives || []).map(obj => `<li>${escapeHtml(obj)}</li>`).join('')}
+                            </ul>
+                            
+                            <h4 style="color: var(--neon-blue); margin-top: 20px;">📖 Lesson Content</h4>
+                            ${(lesson.contentBlocks || []).map(block => {
+                                if (block.type === 'text') {
+                                    return `<p style="margin: 15px 0; line-height: 1.6;">${formatResponse(block.content)}</p>`;
+                                } else if (block.type === 'definition') {
+                                    return `<div style="background: var(--input-bg); padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 3px solid var(--neon-green);">
+                                        <strong style="color: var(--neon-green);">${escapeHtml(block.term)}</strong>: ${escapeHtml(block.definition)}
+                                    </div>`;
+                                } else if (block.type === 'worked_example') {
+                                    return `<div style="background: var(--card-bg); padding: 15px; border-radius: 8px; margin: 15px 0;">
+                                        <strong style="color: var(--neon-blue);">Worked Example:</strong><br><br>
+                                        <strong>Question:</strong> ${escapeHtml(block.question)}<br><br>
+                                        <strong>Steps:</strong>
+                                        <ol style="margin-left: 20px;">${(block.steps || []).map(s => `<li>${escapeHtml(s)}</li>`).join('')}</ol>
+                                        <strong style="color: var(--neon-green);">Answer:</strong> ${escapeHtml(block.answer)}
+                                    </div>`;
+                                }
+                                return '';
+                            }).join('')}
+                            
+                            ${lesson.examTips && lesson.examTips.length > 0 ? `
+                                <h4 style="color: var(--neon-green); margin-top: 20px;">💡 Exam Tips</h4>
+                                <ul style="margin-left: 20px; color: var(--text-secondary);">
+                                    ${lesson.examTips.map(tip => `<li>${escapeHtml(tip)}</li>`).join('')}
+                                </ul>
+                            ` : ''}
+                            
+                            ${lesson.commonMistakes && lesson.commonMistakes.length > 0 ? `
+                                <h4 style="color: var(--neon-orange); margin-top: 20px;">⚠️ Common Mistakes</h4>
+                                <ul style="margin-left: 20px; color: var(--text-secondary);">
+                                    ${lesson.commonMistakes.map(mistake => `<li>${escapeHtml(mistake)}</li>`).join('')}
+                                </ul>
+                            ` : ''}
+                        </div>
+                        
+                        <div class="terminal-display" style="border-left-color: var(--neon-green);">
+                            <h4 style="color: var(--neon-green); margin-bottom: 15px;">✅ Mark as Complete</h4>
+                            <p style="margin-bottom: 15px;">How confident do you feel about this topic?</p>
+                            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                                ${[1,2,3,4,5].map(rating => `
+                                    <button class="btn-secondary confidence-btn" data-rating="${rating}" onclick="selectConfidence(${rating})" style="flex: 1; padding: 10px;">
+                                        ${'★'.repeat(rating)}${'☆'.repeat(5-rating)}
+                                    </button>
+                                `).join('')}
+                            </div>
+                            <button class="btn-primary" onclick="markLessonComplete(${lessonId})" id="completeLessonBtn">
+                                <i class="fas fa-check"></i> <span id="completeBtnText">COMPLETE LESSON</span>
+                            </button>
+                        </div>
+                    `;
+                    
+                    // Store lesson data in state for completion
+                    state.currentLesson = { lessonId, startTime: Date.now(), confidenceRating: 3 };
+                }
+            } catch (err) {
+                console.error('Failed to load lesson:', err);
+                list.innerHTML = `<div class="terminal-display error">⚠️ Failed to load lesson: ${escapeHtml(err.message)}</div>`;
+            }
+        }
+
+        function selectConfidence(rating) {
+            document.querySelectorAll('.confidence-btn').forEach(btn => btn.classList.remove('selected'));
+            document.querySelector(`[data-rating="${rating}"]`).classList.add('selected');
+            if (state.currentLesson) {
+                state.currentLesson.confidenceRating = rating;
+            }
+        }
+
+        async function markLessonComplete(lessonId) {
+            const btn = document.getElementById('completeLessonBtn');
+            const btnText = document.getElementById('completeBtnText');
+            btn.disabled = true;
+            btnText.innerHTML = '<div class="spinner"></div> Saving...';
+            
+            try {
+                const timeSpent = Math.round((Date.now() - (state.currentLesson?.startTime || Date.now())) / 60000); // minutes
+                const confidenceRating = state.currentLesson?.confidenceRating || 3;
+                
+                const response = await callWorkflowApi('lesson', 'mark_complete', {
+                    lessonId,
+                    completionPercentage: 100,
+                    confidenceRating,
+                    timeSpent,
+                    notes: ''
+                });
+                
+                if (response.success) {
+                    // Update XP
+                    if (response.student && response.student.xpPoints) {
+                        state.xp = response.student.xpPoints;
+                        updateXPDisplay();
+                    }
+                    
+                    alert(`✅ Lesson completed! You earned +${response.student.xpGained || 20} XP!`);
+                    loadLessons(); // Go back to lessons list
+                }
+            } catch (err) {
+                console.error('Failed to mark lesson complete:', err);
+                alert('⚠️ Failed to save progress. Please try again.');
+            } finally {
+                btn.disabled = false;
+                btnText.textContent = 'COMPLETE LESSON';
+            }
+        }
+
         async function loadLessons() {
-            const subject = document.getElementById('lessonSubjectFilter').value;
             const grid = document.getElementById('lessonsGrid');
             
             // Check demo mode
@@ -1953,24 +2180,257 @@ Rules:
             grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);"><div class="spinner"></div> Loading lessons...</div>';
             
             try {
-                const response = await apiCall('list_lessons', {
-                    subject: subject || undefined
-                });
-
-                lessonsState.lessons = response.lessons || [];
-
-                if (lessonsState.lessons.length === 0) {
+                // Load dashboard to get topics with lessons
+                const response = await callWorkflowApi('progress', 'get_dashboard', {});
+                
+                if (response.success && response.topics && response.topics.length > 0) {
+                    // Group topics by subject
+                    const topicsBySubject = {};
+                    response.topics.forEach(topic => {
+                        if (!topicsBySubject[topic.subject]) {
+                            topicsBySubject[topic.subject] = [];
+                        }
+                        topicsBySubject[topic.subject].push(topic);
+                    });
+                    
+                    // Create mastery nodes for each topic
+                    let html = '';
+                    Object.entries(topicsBySubject).forEach(([subject, topics]) => {
+                        topics.forEach(topic => {
+                            html += `
+                                <div class="mastery-node" onclick="viewTopicLessons(${topic.id}, '${escapeHtml(topic.name)}')" style="cursor: pointer; padding: 20px;">
+                                    <div class="mastery-icon">${getSubjectIcon(subject)}</div>
+                                    <div class="mastery-name" style="font-size: 0.85rem; margin: 10px 0;">${escapeHtml(topic.name)}</div>
+                                    <div style="font-size: 0.65rem; color: var(--text-secondary); margin-top: 5px;">
+                                        ${subject}<br>
+                                        ${topic.lessonsCompleted || 0} lessons • ${topic.masteryLevel || 0}% mastery
+                                    </div>
+                                    <div style="width: 100%; height: 4px; background: var(--input-bg); border-radius: 2px; margin-top: 8px;">
+                                        <div style="width: ${topic.masteryLevel || 0}%; height: 100%; background: var(--neon-green); border-radius: 2px;"></div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    });
+                    
+                    grid.innerHTML = html || '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">📚 No topics available yet.</div>';
+                } else {
                     grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">📚 No lessons available yet. Check back soon!</div>';
-                    return;
                 }
+            } catch (err) {
+                console.error('Failed to load lessons:', err);
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--neon-pink);">⚠️ Failed to load lessons. Please try again.</div>';
+            }
+        }
 
-                grid.innerHTML = lessonsState.lessons.map(lesson => `
-                    <div class="mastery-node" onclick="viewLesson(${lesson.lesson_id})" style="cursor: pointer; padding: 20px;">
-                        <div class="mastery-icon">${getSubjectIcon(lesson.subject)}</div>
-                        <div class="mastery-name" style="font-size: 0.85rem; margin: 10px 0;">${escapeHtml(lesson.title)}</div>
-                        <div style="font-size: 0.65rem; color: var(--text-secondary); margin-top: 5px;">
-                            ${lesson.subject} • ${lesson.difficulty || 'Medium'}<br>
-                            ${lesson.duration_minutes || 30} mins
+        async function viewTopicLessons(topicId, topicName) {
+            const grid = document.getElementById('lessonsGrid');
+            grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);"><div class="spinner"></div> Loading lessons...</div>';
+            
+            try {
+                const response = await callWorkflowApi('lesson', 'get_lessons_by_topic', { topicId });
+                
+                if (response.success && response.lessons && response.lessons.length > 0) {
+                    let html = `
+                        <div style="grid-column: 1/-1; margin-bottom: 20px;">
+                            <button class="btn-secondary" onclick="loadLessons()" style="margin-bottom: 10px;">
+                                <i class="fas fa-arrow-left"></i> Back to Topics
+                            </button>
+                            <h3 style="color: var(--neon-pink); font-family: 'Orbitron';">${escapeHtml(topicName)}</h3>
+                        </div>
+                    `;
+                    
+                    response.lessons.forEach(lesson => {
+                        const statusIcon = lesson.progress.status === 'completed' ? '✓' : 
+                                         lesson.progress.status === 'in_progress' ? '⏳' : '○';
+                        const statusColor = lesson.progress.status === 'completed' ? 'var(--neon-green)' : 
+                                          lesson.progress.status === 'in_progress' ? 'var(--neon-orange)' : 'var(--text-muted)';
+                        
+                        html += `
+                            <div class="mastery-node" onclick="viewLessonDetail(${lesson.id}, '${escapeHtml(lesson.title)}')" style="cursor: pointer; padding: 20px; position: relative;">
+                                <div style="position: absolute; top: 10px; right: 10px; color: ${statusColor}; font-size: 1.2rem;">${statusIcon}</div>
+                                <div class="mastery-icon">${lesson.number}</div>
+                                <div class="mastery-name" style="font-size: 0.85rem; margin: 10px 0;">${escapeHtml(lesson.title)}</div>
+                                <div style="font-size: 0.65rem; color: var(--text-secondary); margin-top: 5px;">
+                                    ${lesson.type.replace(/_/g, ' ')}<br>
+                                    ${lesson.estimatedMinutes} mins • ${'★'.repeat(lesson.difficultyRating || 1)}
+                                </div>
+                                ${lesson.progress.completionPercentage > 0 ? `
+                                    <div style="width: 100%; height: 4px; background: var(--input-bg); border-radius: 2px; margin-top: 8px;">
+                                        <div style="width: ${lesson.progress.completionPercentage}%; height: 100%; background: var(--neon-blue); border-radius: 2px;"></div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `;
+                    });
+                    
+                    grid.innerHTML = html;
+                } else {
+                    grid.innerHTML = `
+                        <div style="grid-column: 1/-1;">
+                            <button class="btn-secondary" onclick="loadLessons()" style="margin-bottom: 20px;">
+                                <i class="fas fa-arrow-left"></i> Back to Topics
+                            </button>
+                            <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+                                📚 No lessons available for this topic yet.
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                console.error('Failed to load topic lessons:', err);
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--neon-pink);">⚠️ Failed to load lessons.</div>';
+            }
+        }
+
+        async function viewLessonDetail(lessonId, lessonTitle) {
+            const grid = document.getElementById('lessonsGrid');
+            grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);"><div class="spinner"></div> Loading lesson...</div>';
+            
+            try {
+                const response = await callWorkflowApi('lesson', 'get_lesson', { lessonId });
+                
+                if (response.success && response.lesson) {
+                    const lesson = response.lesson;
+                    const progress = response.progress;
+                    
+                    let html = `
+                        <div style="grid-column: 1/-1;">
+                            <button class="btn-secondary" onclick="viewTopicLessons(${lesson.topic.id}, '${escapeHtml(lesson.topic.name)}')" style="margin-bottom: 20px;">
+                                <i class="fas fa-arrow-left"></i> Back to Lessons
+                            </button>
+                            
+                            <div class="terminal-display" style="border-left-color: var(--neon-blue); margin-bottom: 20px;">
+                                <h2 style="color: var(--neon-pink); font-family: 'Orbitron'; margin-bottom: 10px;">${escapeHtml(lesson.title)}</h2>
+                                <div style="color: var(--text-secondary); margin-bottom: 15px;">
+                                    ${lesson.subject.name} • ${lesson.topic.name} • ${lesson.estimatedMinutes} min
+                                </div>
+                                
+                                ${lesson.learningObjectives && lesson.learningObjectives.length > 0 ? `
+                                    <h4 style="color: var(--neon-blue); margin-top: 20px;">📋 Learning Objectives</h4>
+                                    <ul style="margin-left: 20px; color: var(--text-secondary);">
+                                        ${lesson.learningObjectives.map(obj => `<li>${escapeHtml(obj)}</li>`).join('')}
+                                    </ul>
+                                ` : ''}
+                                
+                                <h4 style="color: var(--neon-blue); margin-top: 20px;">📖 Lesson Content</h4>
+                                ${(lesson.contentBlocks || []).map(block => {
+                                    if (block.type === 'text') {
+                                        return `<p style="margin: 15px 0; line-height: 1.6;">${formatResponse(block.content)}</p>`;
+                                    } else if (block.type === 'definition') {
+                                        return `<div style="background: var(--input-bg); padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 3px solid var(--neon-green);">
+                                            <strong style="color: var(--neon-green);">${escapeHtml(block.term)}</strong>: ${escapeHtml(block.definition)}
+                                        </div>`;
+                                    } else if (block.type === 'worked_example') {
+                                        return `<div style="background: var(--card-bg); padding: 15px; border-radius: 8px; margin: 15px 0;">
+                                            <strong style="color: var(--neon-blue);">Worked Example:</strong><br><br>
+                                            <strong>Question:</strong> ${escapeHtml(block.question)}<br><br>
+                                            <strong>Steps:</strong>
+                                            <ol style="margin-left: 20px;">${(block.steps || []).map(s => `<li>${escapeHtml(s)}</li>`).join('')}</ol>
+                                            <strong style="color: var(--neon-green);">Answer:</strong> ${escapeHtml(block.answer)}
+                                        </div>`;
+                                    }
+                                    return '';
+                                }).join('')}
+                                
+                                ${lesson.examTips && lesson.examTips.length > 0 ? `
+                                    <h4 style="color: var(--neon-green); margin-top: 20px;">💡 Exam Tips</h4>
+                                    <ul style="margin-left: 20px; color: var(--text-secondary);">
+                                        ${lesson.examTips.map(tip => `<li>${escapeHtml(tip)}</li>`).join('')}
+                                    </ul>
+                                ` : ''}
+                                
+                                ${lesson.commonMistakes && lesson.commonMistakes.length > 0 ? `
+                                    <h4 style="color: var(--neon-orange); margin-top: 20px;">⚠️ Common Mistakes</h4>
+                                    <ul style="margin-left: 20px; color: var(--text-secondary);">
+                                        ${lesson.commonMistakes.map(mistake => `<li>${escapeHtml(mistake)}</li>`).join('')}
+                                    </ul>
+                                ` : ''}
+                            </div>
+                            
+                            <div class="terminal-display" style="border-left-color: var(--neon-green);">
+                                <h4 style="color: var(--neon-green); margin-bottom: 15px;">✅ Mark as Complete</h4>
+                                <p style="margin-bottom: 15px;">How confident do you feel about this topic?</p>
+                                <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                                    ${[1,2,3,4,5].map(rating => `
+                                        <button class="btn-secondary confidence-btn" data-rating="${rating}" onclick="selectConfidence(${rating})" style="flex: 1; min-width: 80px; padding: 10px; ${progress.confidenceRating === rating ? 'background: var(--neon-blue); border-color: var(--neon-blue);' : ''}">
+                                            ${'⭐'.repeat(rating)}${'☆'.repeat(5-rating)}
+                                        </button>
+                                    `).join('')}
+                                </div>
+                                <button class="btn-primary" onclick="markLessonComplete(${lessonId})" id="completeLessonBtn">
+                                    <i class="fas fa-check"></i> <span id="completeBtnText">COMPLETE LESSON (+20 XP)</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    grid.innerHTML = html;
+                    
+                    // Store lesson data in state for completion
+                    state.currentLesson = { lessonId, startTime: Date.now(), confidenceRating: progress.confidenceRating || 3 };
+                }
+            } catch (err) {
+                console.error('Failed to load lesson:', err);
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--neon-pink);">⚠️ Failed to load lesson.</div>';
+            }
+        }
+
+        function selectConfidence(rating) {
+            document.querySelectorAll('.confidence-btn').forEach(btn => {
+                btn.classList.remove('selected');
+                btn.style.background = '';
+                btn.style.borderColor = '';
+            });
+            const selected = document.querySelector(`[data-rating="${rating}"]`);
+            if (selected) {
+                selected.classList.add('selected');
+                selected.style.background = 'var(--neon-blue)';
+                selected.style.borderColor = 'var(--neon-blue)';
+            }
+            if (state.currentLesson) {
+                state.currentLesson.confidenceRating = rating;
+            }
+        }
+
+        async function markLessonComplete(lessonId) {
+            const btn = document.getElementById('completeLessonBtn');
+            const btnText = document.getElementById('completeBtnText');
+            btn.disabled = true;
+            btnText.innerHTML = '<div class="spinner"></div> Saving...';
+            
+            try {
+                const timeSpent = Math.round((Date.now() - (state.currentLesson?.startTime || Date.now())) / 60000); // minutes
+                const confidenceRating = state.currentLesson?.confidenceRating || 3;
+                
+                const response = await callWorkflowApi('lesson', 'mark_complete', {
+                    lessonId,
+                    completionPercentage: 100,
+                    confidenceRating,
+                    timeSpent,
+                    notes: ''
+                });
+                
+                if (response.success) {
+                    // Update XP
+                    if (response.student && response.student.xpPoints) {
+                        state.xp = response.student.xpPoints;
+                        updateXPDisplay();
+                    }
+                    
+                    alert(`✅ Lesson completed! You earned +${response.student.xpGained || 20} XP!`);
+                    loadLessons(); // Go back to topics list
+                }
+            } catch (err) {
+                console.error('Failed to mark lesson complete:', err);
+                alert('⚠️ Failed to save progress. Please try again.');
+            } finally {
+                btn.disabled = false;
+                btnText.textContent = 'COMPLETE LESSON (+20 XP)';
+            }
+        }
+
+        async function loadLessons() {                            ${lesson.duration_minutes || 30} mins
                         </div>
                     </div>
                 `).join('');
@@ -2363,5 +2823,3 @@ Rules:
             }
         }
     </script>
-</body>
-</html>
