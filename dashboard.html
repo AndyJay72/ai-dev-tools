@@ -1126,9 +1126,9 @@
     <script>
         // Configuration
         const CONFIG = {
-            // Legacy API for Ask Tutor (kept for backward compatibility)
+            // Main API for Ask Tutor and Quiz
             apiUrl: localStorage.getItem('tutor_api_url') || 'https://n8n.srv1090894.hstgr.cloud/webhook/tutor',
-            // New workflow APIs
+            // Separate workflow endpoints (working workflows you already have)
             lessonApi: localStorage.getItem('lesson_api_url') || 'https://n8n.srv1090894.hstgr.cloud/webhook/lesson',
             practiceApi: localStorage.getItem('practice_api_url') || 'https://n8n.srv1090894.hstgr.cloud/webhook/practice',
             progressApi: localStorage.getItem('progress_api_url') || 'https://n8n.srv1090894.hstgr.cloud/webhook/progress',
@@ -1181,10 +1181,10 @@
             const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
             const isDemoMode = sessionStorage.getItem('isDemoMode') === 'true';
             
-            if (!token) {
-                // Redirect to login if no auth token
-                window.location.href = 'index.html';
-                return;
+            if (!token && !isDemoMode) {
+                // Enable demo mode for testing
+                sessionStorage.setItem('isDemoMode', 'true');
+                console.log('No auth token - starting in demo mode');
             }
 
             CONFIG.authToken = token;
@@ -1227,6 +1227,21 @@
                     await loadDashboardStats();
                     await loadHistory();
                 }
+                
+                // Log required API actions for n8n setup
+                console.log('%c🔧 N8N WORKFLOW SETUP REQUIRED', 'color: #f72585; font-size: 14px; font-weight: bold;');
+                console.log('%cYour n8n workflow must handle these actions (using GET with query params):', 'color: #4895ef; font-size: 12px;');
+                console.log('%c- ask_question (question, subject)', 'color: #00f5d4;');
+                console.log('%c- generate_quiz (question, subject, count, difficulty, topic)', 'color: #00f5d4;');
+                console.log('%c- get_student_profile ()', 'color: #00f5d4;');
+                console.log('%c- get_dashboard_stats ()', 'color: #00f5d4;');
+                console.log('%c- get_history (limit)', 'color: #00f5d4;');
+                console.log('%c- get_homework_list ()', 'color: #00f5d4;');
+                console.log('%c- get_homework_details (homework_id)', 'color: #00f5d4;');
+                console.log('%c- get_dashboard ()', 'color: #00f5d4;');
+                console.log('%c- get_lessons_by_topic (topicId)', 'color: #00f5d4;');
+                console.log('%c\nAll requests use GET method to avoid CORS preflight', 'color: #ff9f1c; font-weight: bold;');
+                console.log('%cPayload is sent as: ?data={"action":"ask_question",...}', 'color: #888;');
             }
             
             applyTheme(state.theme);
@@ -1417,15 +1432,23 @@
                 return { success: true, message: 'Demo mode - feature not available' };
             }
             
-            // Real API call - use GET with query params like beta.html (avoids CORS preflight)
+            // Real API call - use GET with query params (avoids CORS preflight)
             const payload = {
                 studentId: CONFIG.studentId || 'guest',
                 userId: CONFIG.userId,
                 action: endpoint,
                 ...data
             };
-            const url = `${CONFIG.apiUrl}?data=${encodeURIComponent(JSON.stringify(payload))}`;
-            const response = await fetch(url);
+            
+            // URL encode the payload as query parameter
+            const url = `${CONFIG.apiUrl}?${new URLSearchParams({data: JSON.stringify(payload)}).toString()}`;
+            
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
             
             if (response.status === 401) {
                 // Token expired, redirect to login
@@ -1440,7 +1463,7 @@
             return await response.json();
         }
 
-        // New API helper for the three workflows (lessons, practice, progress)
+        // API helper for the three separate workflows (lessons, practice, progress)
         async function callWorkflowApi(workflowType, action, data = {}) {
             // Demo mode fallback
             if (sessionStorage.getItem('isDemoMode') === 'true') {
@@ -1464,8 +1487,15 @@
                 ...data
             };
             
-            const url = `${apiUrl}?data=${encodeURIComponent(JSON.stringify(payload))}`;
-            const response = await fetch(url);
+            // URL encode the payload as query parameter
+            const url = `${apiUrl}?${new URLSearchParams(payload).toString()}`;
+            
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
             
             if (response.status === 401) {
                 logout();
@@ -1653,14 +1683,45 @@
                 if (err.message === 'Session expired') {
                     errorMsg = 'Your session has expired. Please log in again.';
                 } else if (err.message.includes('Failed to fetch') || err.name === 'TypeError') {
-                    errorMsg = 'Cannot connect to n8n server. CORS issue detected.\n\n📋 Fix in n8n:\n1. Add HTTP Response node to your workflow\n2. Set these headers:\n   • Access-Control-Allow-Origin: *\n   • Access-Control-Allow-Methods: POST, OPTIONS\n   • Access-Control-Allow-Headers: Content-Type, Authorization\n\nOr use Demo Mode for testing.';
+                    errorMsg = `⚠️ CONNECTION FAILED - Cannot reach n8n server
+
+🔍 n8n Workflow Checklist:
+1. ✓ Workflow is activated (check n8n dashboard)
+2. ✓ Webhook URL is correct: ${CONFIG.apiUrl}
+3. ✓ Webhook node accepts GET requests
+4. ✓ Add HTTP Response node with these headers:
+   • Access-Control-Allow-Origin: *
+   • Access-Control-Allow-Methods: GET, OPTIONS
+   • Access-Control-Allow-Headers: Content-Type
+5. ✓ Workflow extracts 'data' from query parameters
+6. ✓ Workflow routes based on 'action' field
+
+💡 Test your webhook first:
+   Open: ${CONFIG.apiUrl}?data={"action":"ask_question","question":"test","subject":"General"}
+
+📋 Or enable Demo Mode to test UI without backend.`;
                 } else if (err.message.includes('HTTP 404')) {
-                    errorMsg = 'Webhook not found. Verify your n8n workflow is activated.';
+                    errorMsg = `⚠️ WEBHOOK NOT FOUND (404)
+
+The webhook endpoint doesn't exist. Check:
+• Workflow URL: ${CONFIG.apiUrl}
+• Workflow is saved and activated
+• Webhook path matches exactly
+
+Update URL in Settings if needed.`;
                 } else if (err.message.includes('HTTP 500')) {
-                    errorMsg = 'Server error. Check n8n workflow execution logs.';
+                    errorMsg = `⚠️ SERVER ERROR (500)
+
+The n8n workflow encountered an error. Check:
+• n8n execution logs for error details
+• Database connection is working
+• All required nodes are configured
+• OpenAI/AI credentials are valid`;
+                } else if (err.message.includes('HTTP 401') || err.message.includes('HTTP 403')) {
+                    errorMsg = 'Authentication failed. Token may be expired or invalid.';
                 }
                 
-                showOutput('responseOutput', `<span style="color: var(--neon-pink)">[ERROR] ${errorMsg.replace(/\n/g, '<br>')}</span>`, 'error');
+                showOutput('responseOutput', `<pre style="color: var(--neon-pink); white-space: pre-wrap; font-size: 0.75rem;">${errorMsg}</pre>`, 'error');
                 
                 document.getElementById('statusDot').classList.remove('online');
                 document.getElementById('statusDot').classList.add('offline');
@@ -2430,16 +2491,6 @@ Rules:
             }
         }
 
-        async function loadLessons() {                            ${lesson.duration_minutes || 30} mins
-                        </div>
-                    </div>
-                `).join('');
-            } catch (err) {
-                console.error('Failed to load lessons:', err);
-                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--neon-pink);">⚠️ Failed to load lessons. Please try again.</div>';
-            }
-        }
-
         async function viewLesson(lessonId) {
             document.getElementById('lessonsGrid').style.display = 'none';
             document.getElementById('lessonViewer').style.display = 'block';
@@ -2563,9 +2614,9 @@ Rules:
             list.innerHTML = '<div style="text-align: center; padding: 20px;"><div class="spinner"></div> Loading homework...</div>';
             
             try {
-                const response = await apiCall('list_homework', {});
+                const response = await apiCall('get_homework_list', {});
 
-                homeworkState.assignments = response.assignments || [];
+                homeworkState.assignments = response.homework || response.assignments || [];
 
                 if (homeworkState.assignments.length === 0) {
                     list.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-muted);">📝 No homework assigned yet.</div>';
@@ -2602,11 +2653,11 @@ Rules:
             document.getElementById('homeworkQuestions').innerHTML = '<div style="text-align: center;"><div class="spinner"></div> Loading questions...</div>';
             
             try {
-                const response = await apiCall('get_homework', {
+                const response = await apiCall('get_homework_details', {
                     homework_id: homeworkId
                 });
 
-                homeworkState.currentAssignment = response.homework;
+                homeworkState.currentAssignment = response.homework || response.assignment;
                 homeworkState.answers = {};
 
                 const hw = response.homework;
@@ -2823,3 +2874,5 @@ Rules:
             }
         }
     </script>
+</body>
+</html>
